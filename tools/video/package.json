@@ -1,0 +1,14 @@
+{
+  "name": "jarvis-demo-video",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Records a portfolio-ready demo video of the Jarvis voice dashboard.",
+  "scripts": {
+    "record": "node record-demo.mjs"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "playwright": "1.56.0"
+  }
+}
