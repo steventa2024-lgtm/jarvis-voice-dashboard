@@ -1,0 +1,14 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",     "x": 0,    "y": 0,    "w": 1600, "h": 900, "title": "I — Orion" },
+    { "file": "HoloOrb.dc.html",  "x": 1760, "y": 0,    "w": 1600, "h": 900, "title": "J — Holo Orb" },
+    { "file": "DeepScan.dc.html", "x": 880,  "y": 1080, "w": 1600, "h": 900, "title": "K — Deep Scan" }
+  ],
+  "annotations": [
+    { "id": "note-i", "x": 0,    "y": -150, "w": 660, "text": "I — ORION\nStraight from your second reference. Tabbed frame headers welded to each bay, orange as a co-equal channel to the teal, bar clusters and matrix grids as texture, a waveform rail across the bottom, and the reactor sitting inside a tracking disc with a point cloud and labelled contacts.\nKeeps your three-column layout. Densest and most numeric of the three." },
+    { "id": "note-j", "x": 1760, "y": -150, "w": 660, "text": "J — HOLO ORB\nFrom your first reference. The reactor floats inside an orbital shell with a particle field and a full-frame reticle, soft rounded glass panels lifted off the background, and an icon dock along the bottom.\nMost cinematic, least dense. Reads as a projection rather than a console." },
+    { "id": "note-k", "x": 880,  "y": 930,  "w": 660, "text": "K — DEEP SCAN\nThe ORION planet-tracker panel, applied to the whole screen. Deliberately asymmetric: one large scanning display holds the reactor at its heart with tracked contacts and leader lines, while the right half is a tight telemetry grid and the bottom is a waveform and spectrum bank.\nMost technical. Breaks the symmetry you have now." },
+    { "id": "note-core", "x": 880, "y": 1360, "w": 400, "text": "The arc reactor is unchanged in all three — same ten coil segments, same housing ring, same hot centre. Only what surrounds it differs." }
+  ],
+  "launch": { "view": "canvas" }
+}

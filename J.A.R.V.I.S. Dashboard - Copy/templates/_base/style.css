@@ -1,0 +1,357 @@
+/* ==========================================================================
+   Design foundation
+
+   Every page J.A.R.V.I.S. builds starts here, so that "make me a landing
+   page" produces something with a type scale, real spacing and a considered
+   palette rather than Times New Roman on white.
+
+   Tokens first, primitives second, components third. Nothing here is a
+   framework — it is about 200 lines of plain CSS with no build step, and it
+   is meant to be edited, not imported.
+   ========================================================================== */
+
+:root {
+  /* ---- colour ----
+     One accent, a neutral ramp, and semantic roles. Change --accent and the
+     whole page follows. */
+  --accent:      #4f7cff;
+  --accent-ink:  #ffffff;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+
+  --bg:      #ffffff;
+  --surface: #f7f8fa;
+  --raised:  #ffffff;
+  --line:    #e3e6ec;
+  --ink:     #12141a;
+  --ink-2:   #545a68;
+  --ink-3:   #878e9c;
+
+  --ok:   #10905e;
+  --warn: #b8760b;
+  --bad:  #c8362f;
+
+  /* ---- type ----
+     A modular scale. Sizes clamp so a phone and a 4K display both read well
+     without a single media query. */
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+
+  --step--1: clamp(0.80rem, 0.77rem + 0.15vw, 0.88rem);
+  --step-0:  clamp(1.00rem, 0.95rem + 0.25vw, 1.13rem);
+  --step-1:  clamp(1.25rem, 1.15rem + 0.50vw, 1.55rem);
+  --step-2:  clamp(1.56rem, 1.35rem + 1.05vw, 2.20rem);
+  --step-3:  clamp(1.95rem, 1.55rem + 2.00vw, 3.20rem);
+  --step-4:  clamp(2.44rem, 1.75rem + 3.45vw, 4.60rem);
+
+  /* ---- space ----
+     One scale, used everywhere. Arbitrary pixel values are what make a page
+     look assembled rather than designed. */
+  --s-1: 0.25rem; --s-2: 0.5rem;  --s-3: 0.75rem; --s-4: 1rem;
+  --s-5: 1.5rem;  --s-6: 2rem;    --s-7: 3rem;    --s-8: 4.5rem;
+  --s-9: 7rem;
+
+  --r-sm: 6px; --r: 12px; --r-lg: 20px; --r-full: 999px;
+
+  --shadow:    0 1px 2px rgba(16, 20, 32, .06), 0 4px 16px -6px rgba(16, 20, 32, .12);
+  --shadow-lg: 0 2px 4px rgba(16, 20, 32, .06), 0 18px 44px -12px rgba(16, 20, 32, .22);
+
+  --measure: 68ch;              /* never let body text run wider than this */
+  --page: 1140px;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --dur: .32s;
+}
+
+/* Dark by preference, not by toggle. A page that ignores the system setting
+   looks broken at night on half the machines that will ever open it. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:      #0e1015;
+    --surface: #14171e;
+    --raised:  #191d26;
+    --line:    #262b36;
+    --ink:     #e8ebf2;
+    --ink-2:   #a2aab9;
+    --ink-3:   #6f7787;
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px -6px rgba(0,0,0,.5);
+    --shadow-lg: 0 2px 4px rgba(0,0,0,.4), 0 18px 44px -12px rgba(0,0,0,.6);
+  }
+}
+
+/* ------------------------------------------------------------------ reset */
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+img, svg, video, canvas { display: block; max-width: 100%; height: auto; }
+input, button, textarea, select { font: inherit; color: inherit; }
+p, h1, h2, h3, h4, li { overflow-wrap: break-word; }
+
+h1, h2, h3, h4 { line-height: 1.15; letter-spacing: -0.02em; font-weight: 650;
+                 overflow-wrap: anywhere; }
+h1 { font-size: var(--step-4); }
+h2 { font-size: var(--step-3); }
+h3 { font-size: var(--step-2); }
+h4 { font-size: var(--step-1); }
+small { font-size: var(--step--1); color: var(--ink-2); }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+
+code, pre { font-family: var(--mono); font-size: 0.92em; }
+pre {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r); padding: var(--s-4); overflow-x: auto;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--r-sm); }
+
+/* ------------------------------------------------------------- primitives */
+
+/* The page gutter. Everything that spans the width sits in one of these. */
+.container { width: min(100% - var(--s-5) * 2, var(--page)); margin-inline: auto; }
+.narrow    { width: min(100% - var(--s-5) * 2, var(--measure)); margin-inline: auto; }
+
+/* Vertical rhythm without margin arithmetic on every element. */
+.stack > * + * { margin-block-start: var(--flow, var(--s-4)); }
+.stack-lg > * + * { margin-block-start: var(--s-6); }
+
+.section { padding-block: var(--s-8); }
+.section-tight { padding-block: var(--s-6); }
+
+/* Auto-fitting grid: as many columns as fit, never fewer than one. No
+   breakpoints, no column counting. */
+.grid {
+  display: grid; gap: var(--s-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); }
+
+/* A row that wraps instead of overflowing. */
+.cluster { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; }
+.between { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: center;
+           justify-content: space-between; }
+/* min-width:0 is load-bearing. A flex item refuses to shrink below its
+   min-content width by default, so a nav or a long word pushes the row wider
+   than the screen instead of wrapping. */
+.between > *, .cluster > * { min-width: 0; }
+
+/* Centering with `place-items: center` sizes every child to its max-content
+   width — which for a paragraph is the whole sentence, unwrapped, running off
+   the side of a phone. Constrain the children and it behaves. */
+.center { display: grid; justify-items: center; text-align: center; }
+.center > * { max-width: 100%; }
+
+.lead { font-size: var(--step-1); color: var(--ink-2);
+        max-width: min(var(--measure), 100%); }
+.muted { color: var(--ink-2); }
+.eyebrow {
+  font-size: var(--step--1); font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent);
+}
+
+/* ------------------------------------------------------------- components */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  border: 1px solid transparent; border-radius: var(--r-full);
+  background: var(--accent); color: var(--accent-ink);
+  font-weight: 600; text-decoration: none; cursor: pointer;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+              background var(--dur) var(--ease);
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn:active { transform: translateY(0); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.card {
+  background: var(--raised); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--s-5);
+  box-shadow: var(--shadow);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.card-hover:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+.field { display: grid; gap: var(--s-2); }
+.field input, .field textarea, .field select {
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--bg); color: var(--ink); width: 100%;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent); outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft); }
+.field label { font-weight: 600; font-size: var(--step--1); }
+
+.tag {
+  display: inline-block; padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-full); background: var(--accent-soft);
+  color: var(--accent); font-size: var(--step--1); font-weight: 600;
+}
+
+.site-header {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding-block: var(--s-3);
+}
+.site-nav { display: flex; gap: var(--s-4) var(--s-5); flex-wrap: wrap;
+            align-items: center; min-width: 0; }
+.site-nav a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
+.site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--ink); }
+
+.site-footer {
+  border-top: 1px solid var(--line); padding-block: var(--s-6);
+  color: var(--ink-3); font-size: var(--step--1);
+}
+
+/* ---- the page opening ----
+
+   A hero is the component every generated page reaches for and the one most
+   often invented from nothing, so it lives here. It is a band with more air
+   than anything else on the page, a constrained column inside it, and a
+   tint that ties the fold to --accent.
+
+   .hero-content carries its own gutter, so `<header class="hero"><div
+   class="hero-content">` is complete on its own. Add .center to .hero for a
+   centred opening. */
+.hero {
+  padding-block: var(--s-9) var(--s-8);
+  background: radial-gradient(70ch 34ch at 50% -20%, var(--accent-soft), transparent 70%);
+}
+.hero-content {
+  width: min(100% - var(--s-5) * 2, var(--page));
+  margin-inline: auto;
+  display: grid; gap: var(--s-5); justify-items: start;
+}
+.hero-content > p { max-width: min(var(--measure), 100%); }
+.hero.center .hero-content { justify-items: center; }
+
+/* ---- the brand lockup ----
+
+   The mark and the name locked together at UI size rather than heading size.
+   Nearly every page needs one and nearly every page invents `.logo` for it. */
+.brand {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  font-weight: 700; letter-spacing: -0.01em;
+  color: var(--ink); text-decoration: none;
+}
+.brand:hover { color: var(--ink); }
+.brand-mark {
+  display: grid; place-items: center; flex: none;
+  width: 2rem; height: 2rem; border-radius: var(--r-sm);
+  background: var(--accent); color: var(--accent-ink);
+  font-size: var(--step--1); font-weight: 700;
+}
+
+/* ---- the small-screen navigation ----
+
+   Four links wrap acceptably. Seven do not, and a nav wrapping to three rows
+   pushes everything below the fold on a phone.
+
+   The nav is only ever collapsed by script: base.js sets data-nav on the
+   header once it knows it can reopen it. A page whose JavaScript never runs
+   shows every link, wrapped — uglier, still usable, and the correct way
+   round. Prefer a <button> for the toggle; a div gets keyboard handling from
+   base.js but a button gets it from the browser. */
+.nav-toggle {
+  display: none; cursor: pointer; line-height: 1;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: transparent;
+}
+@media (max-width: 640px) {
+  .site-header[data-nav] .nav-toggle { display: inline-flex; }
+  .site-header[data-nav="closed"] .site-nav { display: none; }
+  .site-header[data-nav] .site-nav {
+    flex-basis: 100%; flex-direction: column; align-items: flex-start;
+    gap: var(--s-3); padding-block-start: var(--s-3);
+  }
+}
+
+/* ---- images, and what stands in for one ----
+
+   .media locks an aspect ratio so a photograph of the wrong shape crops
+   instead of distorting the row it sits in — the commonest reason a card grid
+   comes out ragged. Override with --ratio.
+
+   .placeholder is what goes there before a real photograph exists. It is
+   drawn entirely in CSS, so it costs no request and cannot 404. Never point
+   an image at a placeholder service: the popular ones are dead, and a broken
+   image is invisible in a description of a screenshot while being the first
+   thing a person sees. */
+.media {
+  aspect-ratio: var(--ratio, 3 / 2);
+  width: 100%; object-fit: cover;
+  border-radius: var(--r); background: var(--surface);
+}
+.placeholder {
+  aspect-ratio: var(--ratio, 3 / 2);
+  display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: var(--r);
+  color: var(--ink-3); font-size: var(--step--1);
+  background:
+    linear-gradient(var(--accent-soft), var(--accent-soft)),
+    repeating-linear-gradient(45deg, var(--surface) 0 10px, var(--raised) 10px 20px);
+}
+
+/* ----------------------------------------------------------------- motion
+
+   Motion earns its place by explaining a change, never by decorating one.
+   Two things only: entrances, and hover feedback that is already on the
+   components above.
+
+   Every one of these is switched off wholesale under prefers-reduced-motion.
+   That is not politeness — for some people this is the difference between a
+   usable page and a headache. */
+
+@keyframes rise   { from { opacity: 0; transform: translateY(18px); } }
+@keyframes fade   { from { opacity: 0; } }
+@keyframes scaleIn{ from { opacity: 0; transform: scale(.96); } }
+
+.reveal { animation: rise var(--dur) var(--ease) both; }
+.reveal-fade { animation: fade calc(var(--dur) * 1.4) var(--ease) both; }
+
+/* Stagger without writing a rule per child. */
+.stagger > * { animation: rise var(--dur) var(--ease) both; }
+.stagger > :nth-child(1) { animation-delay: .04s; }
+.stagger > :nth-child(2) { animation-delay: .10s; }
+.stagger > :nth-child(3) { animation-delay: .16s; }
+.stagger > :nth-child(4) { animation-delay: .22s; }
+.stagger > :nth-child(5) { animation-delay: .28s; }
+.stagger > :nth-child(6) { animation-delay: .34s; }
+
+/* Entrances tied to scrolling. app.js adds .in when the element arrives; if
+   the script never runs, the CSS below still shows everything. */
+.on-scroll { opacity: 0; transform: translateY(22px);
+             transition: opacity .6s var(--ease), transform .6s var(--ease); }
+.on-scroll.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+  .on-scroll { opacity: 1; transform: none; }
+}
+
+/* Anything that must never be seen but must still be read aloud. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}

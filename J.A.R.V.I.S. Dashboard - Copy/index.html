@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="booting">
+
+<canvas id="starfield" aria-hidden="true"></canvas>
+<div class="grid-floor" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+
+<!-- ============================== BOOT OVERLAY ============================== -->
+<div class="boot" id="boot">
+  <div class="boot-mark">J.A.R.V.I.S.</div>
+  <div class="boot-sub" id="bootSub">initialising</div>
+  <div class="boot-bar"><i id="bootBar"></i></div>
+</div>
+
+<main class="hud" id="hud">
+
+  <!-- ================================ TOP BAR ================================ -->
+  <header class="topbar panel">
+    <div class="brand">
+      <span class="brand-dot" id="brandDot"></span>
+      <span class="brand-name">J.A.R.V.I.S.</span>
+      <span class="brand-ver">mk VII</span>
+      <span class="brand-dev">Dev. ZeroPulse</span>
+    </div>
+
+    <div class="topbar-mid">
+      <div class="chip"><b>MODE</b><span id="modeVal">standby</span></div>
+      <button class="chip chip-btn" id="jobsToggle" type="button" aria-pressed="false"
+              title="Hunt for jobs in the background"><b>HUNT</b><span id="jobsState">off</span></button>
+      <div class="chip" id="linkChip"><b>LINK</b><span id="linkVal">--</span></div>
+      <div class="chip"><b>CORE</b><span id="modelVal">offline</span></div>
+      <div class="chip"><b>LAT</b><span id="latencyVal">--</span></div>
+      <div class="chip"><b>TOK</b><span id="tokensVal">0</span></div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="clock-wrap">
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="date" id="date">&nbsp;</div>
+      </div>
+      <button class="icon-btn" id="paletteBtn" title="Command palette (Ctrl+K)" aria-label="Command palette">&#8984;</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">&#9881;</button>
+    </div>
+  </header>
+
+  <!-- =============================== LEFT RAIL =============================== -->
+  <aside class="rail rail-left">
+
+    <section class="panel card">
+      <h3 class="card-title">Power Cell</h3>
+      <div class="gauge-row">
+        <canvas class="gauge" id="batteryGauge" width="132" height="132"></canvas>
+        <div class="gauge-meta">
+          <div class="metric-lg" id="batteryPct">--<small>%</small></div>
+          <div class="metric-note" id="batteryState">reading</div>
+          <div class="metric-note dim" id="batteryEta">&nbsp;</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel card">
+      <h3 class="card-title">Core Load</h3>
+      <canvas class="spark" id="loadSpark" height="52"></canvas>
+      <div class="stat-grid">
+        <div class="stat"><b id="fpsVal">--</b><span>fps</span></div>
+        <div class="stat"><b id="frameVal">--</b><span>ms frame</span></div>
+        <div class="stat"><b id="heapVal">--</b><span>heap</span></div>
+        <div class="stat"><b id="coresVal">--</b><span>threads</span></div>
+      </div>
+    </section>
+
+    <section class="panel card">
+      <h3 class="card-title">Uplink</h3>
+      <ul class="kv">
+        <li><span>Status</span><b id="netStatus" class="pill">--</b></li>
+        <li><span>Type</span><b id="netType">--</b></li>
+        <li><span>Downlink</span><b id="netDown">--</b></li>
+        <li><span>Round trip</span><b id="netRtt">--</b></li>
+      </ul>
+      <canvas class="spark" id="netSpark" height="40"></canvas>
+    </section>
+
+    <section class="panel card">
+      <h3 class="card-title">Session</h3>
+      <ul class="kv">
+        <li><span>Uptime</span><b id="uptimeVal">00:00:00</b></li>
+        <li><span>Exchanges</span><b id="turnsVal">0</b></li>
+        <li><span>Web lookups</span><b id="searchVal">0</b></li>
+        <li><span>Memories</span><b id="memCount">0</b></li>
+      </ul>
+    </section>
+
+    <section class="panel card">
+      <h3 class="card-title">Markets</h3>
+      <ul class="kv watch" id="marketList">
+        <li class="watch-note">waiting</li>
+      </ul>
+    </section>
+
+    <section class="panel card">
+      <h3 class="card-title">My teams</h3>
+      <ul class="kv watch" id="teamList">
+        <li class="watch-note">waiting</li>
+      </ul>
+    </section>
+
+  </aside>
+
+  <!-- ============================== CENTER STAGE ============================= -->
+  <section class="stage">
+
+    <div class="orb-stage">
+      <canvas id="orb"  width="480" height="480" aria-hidden="true"></canvas>
+      <canvas id="face" width="480" height="480" aria-hidden="true"></canvas>
+      <button class="orb-hit" id="orbHit" aria-label="Toggle voice input"></button>
+      <div class="stage-status">
+        <div class="status-line" id="statusText">standby</div>
+        <div class="status-sub" id="statusSub">hold space to speak &nbsp;&middot;&nbsp; ctrl+k for commands</div>
+      </div>
+    </div>
+
+    <div class="convo" id="convo" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+    <div class="tasks" id="tasks" aria-live="polite"></div>
+
+    <div class="alert" id="alert" hidden>
+      <span class="alert-ico" aria-hidden="true">!</span>
+      <div class="alert-text"><b id="alertTitle"></b><span id="alertDetail"></span></div>
+      <button class="alert-x" id="alertClose" aria-label="Dismiss">&#10005;</button>
+    </div>
+
+    <div class="preview" id="preview" hidden>
+      <div class="preview-bar">
+        <span class="preview-title" id="previewTitle">preview</span>
+        <button class="btn tiny" id="previewReload" type="button">Reload</button>
+        <button class="btn tiny" id="previewExpand" type="button"
+                aria-pressed="false">Expand</button>
+        <button class="btn tiny" id="previewOpen" type="button">Browser</button>
+        <button class="btn tiny" id="previewClose" type="button">Close</button>
+      </div>
+      <iframe id="previewFrame" title="Project preview"
+              sandbox="allow-scripts allow-forms"></iframe>
+      <!-- Pointer capture rather than CSS resize: a native grip loses the
+           pointer the moment it crosses the iframe. -->
+      <div class="preview-grip" id="previewGrip" title="Drag to resize"></div>
+    </div>
+
+    <!-- Full-size view of a screenshot he took. The card in the transcript is
+         a thumbnail; this is the frame at the size it was actually rendered. -->
+    <div class="lightbox" id="lightbox" hidden>
+      <div class="lightbox-bar">
+        <span class="lightbox-title" id="lightboxTitle"></span>
+        <button class="btn tiny" id="lightboxOpen" type="button">Open the page</button>
+        <button class="btn tiny" id="lightboxClose" type="button">Close</button>
+      </div>
+      <img id="lightboxImg" alt="">
+    </div>
+
+    <div class="attachments" id="attachments" hidden></div>
+
+    <div class="composer panel">
+      <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+      <input type="file" id="fileInput" multiple hidden
+             accept="image/*,.txt,.md,.markdown,.pdf,.docx,.csv,.tsv,.json,.log,.yaml,.yml,.toml,.ini,.env,.py,.js,.jsx,.ts,.tsx,.html,.css,.scss,.java,.c,.h,.cpp,.cs,.go,.rs,.rb,.php,.sh,.bat,.ps1,.sql,.xml">
+      <button class="mic attach" id="attachBtn" title="Attach files or images" aria-label="Attach">
+        <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7.5-7.5" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="mic" id="micBtn" title="Voice input (Space)" aria-label="Voice input">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Z" fill="currentColor"/><path d="M18.5 11.5a6.5 6.5 0 0 1-13 0M12 18v3" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="composer-field">
+        <textarea id="input" rows="1" placeholder="Ask me anything..." autocomplete="off" spellcheck="false"></textarea>
+        <div class="interim" id="interim"></div>
+      </div>
+      <button class="send" id="sendBtn" title="Send (Enter)">
+        <span>SEND</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="stop" id="stopBtn" title="Stop (Esc)" hidden>STOP</button>
+    </div>
+
+    <div class="suggestions" id="suggestions"></div>
+  </section>
+
+  <!-- =============================== RIGHT RAIL ============================== -->
+  <aside class="rail rail-right">
+
+    <section class="panel card">
+      <h3 class="card-title">Local Conditions</h3>
+      <div class="wx-head">
+        <div class="wx-icon" id="wxIcon">&#9678;</div>
+        <div>
+          <div class="metric-lg" id="wxTemp">--<small>&deg;</small></div>
+          <div class="metric-note" id="wxDesc">awaiting location</div>
+        </div>
+      </div>
+      <div class="wx-meta">
+        <div><span>Feels</span><b id="wxFeels">--</b></div>
+        <div><span>Wind</span><b id="wxWind">--</b></div>
+        <div><span>Hum</span><b id="wxHum">--</b></div>
+      </div>
+      <div class="wx-strip" id="wxStrip"></div>
+      <div class="metric-note dim" id="wxPlace">&nbsp;</div>
+    </section>
+
+    <!-- One panel, four faces. The rail was full; adding a fifth card would
+         have made everything shorter rather than making anything visible. -->
+    <section class="panel card grow">
+      <h3 class="card-title">
+        <span class="rail-tabs" id="railTabs">
+          <button class="mini is-on" data-tab="log" type="button">log</button>
+          <button class="mini" data-tab="projects" type="button">projects</button>
+          <button class="mini" data-tab="media" type="button">media</button>
+          <button class="mini" data-tab="inbox" type="button">inbox<b class="tab-badge" id="inboxCount" hidden>0</b></button>
+          <button class="mini" data-tab="jobs" type="button">jobs<b class="tab-badge" id="jobsCount" hidden>0</b></button>
+        </span>
+      </h3>
+
+      <div class="tabpane" data-pane="log">
+        <div class="pane-bar">
+          <button class="mini is-on" data-logfilter="all">all</button>
+          <button class="mini" data-logfilter="sys">sys</button>
+          <button class="mini" data-logfilter="net">net</button>
+          <button class="mini" id="logCopy" title="Copy log">copy</button>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+
+      <div class="tabpane" data-pane="projects" hidden>
+        <div class="pane-bar">
+          <button class="mini" id="projRefresh" type="button">refresh</button>
+          <span class="pane-note" id="projNote">&nbsp;</span>
+        </div>
+        <div class="pane-list" id="projList"></div>
+      </div>
+
+      <div class="tabpane" data-pane="media" hidden>
+        <div class="pane-bar">
+          <button class="mini" id="mediaRefresh" type="button">refresh</button>
+          <span class="pane-note" id="mediaNote">&nbsp;</span>
+        </div>
+        <div class="pane-list" id="mediaList"></div>
+        <div class="media-run">
+          <select id="mediaJob" aria-label="What to do"></select>
+          <button class="btn tiny" id="mediaGo" type="button">Run</button>
+        </div>
+        <div class="media-out" id="mediaOut" hidden></div>
+      </div>
+
+      <div class="tabpane" data-pane="jobs" hidden>
+        <div class="pane-bar">
+          <button class="mini" id="jobsScan" type="button">scan now</button>
+          <button class="mini" id="jobsProfile" type="button">profile</button>
+          <span class="pane-note" id="jobsNote">&nbsp;</span>
+        </div>
+        <div class="pane-list" id="jobsList"></div>
+      </div>
+
+      <div class="tabpane" data-pane="inbox" hidden>
+        <div class="pane-bar">
+          <button class="mini" id="inboxSeen" type="button">mark read</button>
+          <button class="mini" id="inboxClear" type="button">clear</button>
+          <span class="pane-note" id="inboxNote">&nbsp;</span>
+        </div>
+        <div class="pane-list" id="noticeList"></div>
+      </div>
+    </section>
+
+  </aside>
+</main>
+
+<!-- ============================== COMMAND PALETTE ============================= -->
+<div class="overlay" id="paletteOverlay" hidden>
+  <div class="palette panel" role="dialog" aria-modal="true" aria-label="Command palette">
+    <input id="paletteInput" placeholder="Type a command, or just ask a question..." autocomplete="off" spellcheck="false">
+    <div class="palette-list" id="paletteList"></div>
+    <div class="palette-foot"><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate <kbd>&crarr;</kbd> run <kbd>esc</kbd> close</div>
+  </div>
+</div>
+
+<!-- ================================= SETTINGS ================================ -->
+<div class="overlay" id="settingsOverlay" hidden>
+  <div class="sheet panel" role="dialog" aria-modal="true" aria-label="Settings">
+    <header class="sheet-head">
+      <h2>Configuration</h2>
+      <button class="icon-btn" id="settingsClose" aria-label="Close">&#10005;</button>
+    </header>
+
+    <div class="sheet-body">
+      <fieldset>
+        <legend>Cognition</legend>
+
+        <label class="field">
+          <span>Provider</span>
+          <select id="setProvider">
+            <option value="anthropic">Anthropic &mdash; best quality, paid</option>
+            <option value="openai">OpenAI-compatible &mdash; OpenRouter, Groq, Ollama</option>
+          </select>
+          <small>Anything that speaks the OpenAI chat-completions dialect works here, which is where the free models live.</small>
+        </label>
+
+        <div data-provider="openai" hidden>
+          <label class="field">
+            <span>Saved connections</span>
+            <select id="connPicker"></select>
+            <small>Switching loads that provider's URL, key and model below.</small>
+          </label>
+
+          <div class="key-row">
+            <input type="text" id="connName" spellcheck="false" placeholder="Name this connection">
+            <button class="btn tiny" id="connSave" type="button">Save</button>
+            <button class="btn tiny" id="connDelete" type="button">Delete</button>
+          </div>
+
+          <label class="field">
+            <span>Base URL</span>
+            <input type="text" id="setAltBase" spellcheck="false" placeholder="https://openrouter.ai/api/v1">
+            <small>
+              OpenRouter <code>https://openrouter.ai/api/v1</code> &middot;
+              Groq <code>https://api.groq.com/openai/v1</code> &middot;
+              Ollama <code>http://localhost:11434/v1</code>.
+              It must end in <code>/v1</code>.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Key</span>
+            <input type="password" id="setAltKey" spellcheck="false" autocomplete="new-password" data-lpignore="true" placeholder="sk-or-v1-...">
+            <small>Leave blank for a local Ollama, which needs no key.</small>
+          </label>
+
+          <div class="key-row">
+            <span class="key-state" id="altKeyState">no key stored</span>
+          </div>
+
+          <label class="field">
+            <span>Model id</span>
+            <input type="text" id="setAltModel" spellcheck="false" list="altModelOptions"
+                   placeholder="press List models below">
+            <datalist id="altModelOptions"></datalist>
+            <small>Exactly as the provider spells it. On OpenRouter a <code>:free</code> suffix means no charge.</small>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="setRouteLocal">
+            <span>Route through local server &mdash; needed for providers that block browser requests, such as Ollama Cloud</span>
+          </label>
+
+          <label class="field">
+            <span>Vision model <span class="opt">optional</span></span>
+            <input type="text" id="setVisionModel" spellcheck="false" placeholder="gemma4:cloud">
+            <small>
+              Lets him look at your screen. The main model cannot see, so this is a second
+              model used only for images. Leave blank to disable.
+            </small>
+          </label>
+
+          <div class="key-row">
+            <span class="key-state" id="visionNote">vision is off</span>
+          </div>
+
+          <label class="field">
+            <span>Fast model <span class="opt">optional</span></span>
+            <input type="text" id="setFastModel" spellcheck="false" placeholder="llama3.2:3b">
+            <small>
+              Used for plainly conversational turns, to save waiting three seconds on
+              &ldquo;turn it up&rdquo;. Anything needing a tool, research or reasoning still
+              goes to the main model, and a fast turn that reaches for a tool is escalated
+              automatically. Leave blank to always use the main model.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Self-check</span>
+            <select id="setCritique">
+              <option value="off">Off &mdash; answer once</option>
+              <option value="hard">On hard questions &mdash; recommended</option>
+              <option value="always">Always &mdash; slowest, most careful</option>
+            </select>
+            <small>
+              After answering, he re-reads his own work for unsupported claims and
+              arithmetic slips, and shows a correction if he finds one. Roughly doubles
+              the cost of a turn.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Drop to the clock after</span>
+            <select id="setAmbient">
+              <option value="60">1 minute</option>
+              <option value="180">3 minutes</option>
+              <option value="600">10 minutes</option>
+              <option value="0">Never</option>
+            </select>
+            <small>
+              After this long with nothing happening the screen drops to a large clock,
+              the weather and what is playing. Anything at all brings it back.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Interrupt him while he is talking</span>
+            <select id="setBargeIn">
+              <option value="on">On &mdash; speak and he stops</option>
+              <option value="off">Off &mdash; he finishes every answer</option>
+            </select>
+            <small>
+              Keeps the microphone open while he speaks, so saying anything cuts him off.
+              On open speakers he also hears himself, so what the microphone picks up is
+              compared against what he has said in the last few seconds &mdash; his own
+              voice coming back does not stop him, and &ldquo;stop&rdquo; or
+              &ldquo;wait&rdquo; do.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Approve changes to files</span>
+            <select id="setReviewWrites">
+              <option value="overwrite">When he replaces existing work &mdash; recommended</option>
+              <option value="all">Every write &mdash; including new files</option>
+              <option value="off">Never &mdash; changes land straight away</option>
+            </select>
+            <small>
+              He shows the diff and waits before writing. New files have nothing to
+              overwrite, so the middle setting lets those through and stops only on a
+              change to something that already exists. Every write is committed either
+              way, so nothing is ever actually lost.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Check the build afterwards</span>
+            <select id="setBuildCheck">
+              <option value="on">On &mdash; run it or look at it, then fix what broke</option>
+              <option value="off">Off &mdash; take his word for it</option>
+            </select>
+            <small>
+              After he writes into a project, the interface runs it (or renders the page
+              and asks the vision model about it) and hands him what it found, so he can
+              fix it before you ever see it. Two rounds at most. Costs a render or a run
+              per build turn. Looking at a page needs a Vision model set.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Vision runs on</span>
+            <select id="setVisionConn"></select>
+            <small>
+              Which connection serves the vision model. Often not the same one that
+              drives the conversation &mdash; a local Ollama for chat and an OpenRouter
+              model for images is a common pairing.
+            </small>
+          </label>
+
+          <div class="key-row">
+            <button class="btn" id="altModelList" type="button">List models</button>
+            <label class="inline-check">
+              <input type="checkbox" id="freeOnly"> free only
+            </label>
+            <span class="key-state" id="altModelState">ask the provider what it serves</span>
+          </div>
+
+          <div class="field">
+            <span>Available models</span>
+            <div class="model-list" id="modelList">
+              <p class="model-empty">Press <b>List models</b> to see everything this connection can run.</p>
+            </div>
+          </div>
+        </div>
+
+        <label class="field" data-provider="anthropic">
+          <span>Anthropic API key</span>
+          <input type="password" id="setKey" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+          <small>Kept only in this browser's localStorage and sent straight to api.anthropic.com. Create one at console.anthropic.com. Do not commit it to a repo or use this on a shared machine.</small>
+        </label>
+
+        <div class="key-row">
+          <button class="btn" id="keyVerify" type="button">Verify key</button>
+          <span class="key-state" id="keyState">checking</span>
+        </div>
+
+        <label class="field">
+          <span>Model</span>
+          <select id="setModel">
+            <option value="claude-opus-5">Claude Opus 5 &mdash; most capable</option>
+            <option value="claude-sonnet-5">Claude Sonnet 5 &mdash; faster, cheaper</option>
+            <option value="claude-haiku-4-5">Claude Haiku 4.5 &mdash; fastest</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Effort</span>
+          <select id="setEffort">
+            <option value="low">Low &mdash; snappy</option>
+            <option value="medium">Medium &mdash; balanced</option>
+            <option value="high">High &mdash; careful reasoning</option>
+            <option value="xhigh">Very high &mdash; hardest problems</option>
+          </select>
+        </label>
+
+        <label class="check"><input type="checkbox" id="setSearch"><span>Live web search and page fetch &mdash; real-world, up-to-date answers</span></label>
+
+        <div class="field">
+          <span>Google &mdash; calendar and mail</span>
+          <div class="key-row">
+            <input type="text" id="googleClientId" spellcheck="false" placeholder="Client ID">
+          </div>
+          <div class="key-row">
+            <input type="password" id="googleSecret" spellcheck="false" autocomplete="off" placeholder="Client secret">
+          </div>
+          <div class="key-row">
+            <button class="btn" id="googleConnect" type="button">Connect</button>
+            <button class="btn" id="googleForget" type="button">Disconnect</button>
+            <span class="key-state" id="googleState">checking&hellip;</span>
+          </div>
+          <ol class="setup">
+            <li>
+              <button class="btn tiny" id="googleOpenConsole" type="button">Open Google Cloud console</button>
+              &rarr; new project
+            </li>
+            <li><b>APIs &amp; Services</b> &rarr; enable <b>Google Calendar API</b> and <b>Gmail API</b></li>
+            <li><b>OAuth consent screen</b> &rarr; External &rarr; add yourself under <b>Test users</b></li>
+            <li>
+              <b>Credentials</b> &rarr; OAuth client ID &rarr; <b>Web application</b>, and add this
+              redirect URI:
+              <code class="copyable" id="googleRedirect">http://127.0.0.1:8123/google/callback</code>
+              <button class="btn tiny" id="googleCopyUri" type="button">Copy</button>
+            </li>
+          </ol>
+          <small>
+            Read-only: he can see your schedule and who has written to you, and cannot send,
+            reply to or delete anything. Leaving the consent screen in <b>Testing</b> is fine
+            for personal use &mdash; Google does not require verification for that.
+          </small>
+        </div>
+
+        <div class="field">
+          <span>Spotify</span>
+          <div class="key-row">
+            <input type="text" id="spotifyClientId" spellcheck="false"
+                   placeholder="Spotify client ID">
+          </div>
+          <div class="key-row">
+            <button class="btn" id="spotifyConnect" type="button">Connect</button>
+            <button class="btn" id="spotifyForget" type="button">Disconnect</button>
+            <span class="key-state" id="spotifyState">checking…</span>
+          </div>
+          <ol class="setup">
+            <li>
+              <button class="btn tiny" id="spotifyOpenDash" type="button">Open Spotify dashboard</button>
+              &rarr; <b>Create app</b>
+            </li>
+            <li>
+              Paste this as the <b>Redirect URI</b>:
+              <code class="copyable" id="spotifyRedirect">http://127.0.0.1:8123/callback</code>
+              <button class="btn tiny" id="spotifyCopyUri" type="button">Copy</button>
+            </li>
+            <li>Tick <b>Web API</b>, save, then copy the <b>Client ID</b> into the box above.</li>
+            <li>Press <b>Connect</b> and approve.</li>
+          </ol>
+          <small>
+            This is a one-time link between Spotify and J.A.R.V.I.S. It is separate from
+            being signed into the Spotify app &mdash; that part is already fine.
+            Starting playback needs Spotify Premium; pause, skip and volume do not.
+          </small>
+        </div>
+
+        <label class="field">
+          <span>Google search <span class="opt">optional</span></span>
+          <input type="password" id="setGoogleKey" spellcheck="false" autocomplete="off" placeholder="Google API key">
+          <input type="text" id="setGoogleCx" spellcheck="false" placeholder="Search engine ID (cx)">
+          <small>
+            The best results available, 100 queries a day free. Two pieces, from two
+            places: an API key with <b>Custom Search API</b> enabled at
+            <code>console.cloud.google.com</code>, and a Search Engine ID from
+            <code>programmablesearchengine.google.com</code> &mdash; create an engine,
+            set it to <b>Search the entire web</b>, and copy its ID.
+            Tried before every other engine when both are filled in.
+            The ID is the value alone &mdash; no <code>cx:</code> in front of it.
+          </small>
+        </label>
+
+        <label class="field">
+          <span>Pop-up card duration</span>
+          <input type="number" id="setPopSeconds" min="2" max="120" step="1" placeholder="10">
+          <small>
+            Seconds a glanceable card stays before retiring &mdash; scores, prices,
+            a finished render. 2 to 120. The video review card ignores this and
+            stays until you dismiss it, because a card you must act on should not
+            leave on a timer.
+          </small>
+        </label>
+
+        <div class="key-row">
+          <button class="btn" id="searchTest" type="button">Test search</button>
+          <span class="key-state" id="searchState">untested</span>
+        </div>
+
+        <label class="field">
+          <span>Search key <span class="opt">optional</span></span>
+          <input type="password" id="setSearchKey" spellcheck="false" autocomplete="off" placeholder="Brave Search API key">
+          <small>
+            Without a key he searches through engines that allow scraping, and those
+            throttle &mdash; searches start failing after a burst. A Brave key
+            (2,000 queries a month, free) makes it reliable. Get one at
+            <code>brave.com/search/api</code>.
+          </small>
+        </label>
+        <label class="check"><input type="checkbox" id="setThinking"><span>Show reasoning summary while thinking</span></label>
+
+        <label class="field">
+          <span>Your name</span>
+          <input type="text" id="setUserName" spellcheck="false" placeholder="Zero">
+          <small>What he calls you. He also knows you built him.</small>
+        </label>
+
+        <label class="field">
+          <span>Personality and standing instructions</span>
+          <textarea id="setPersona" rows="3" placeholder="e.g. Call me sir. Be dry and concise. I am a student in Manila."></textarea>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Voice</legend>
+        <label class="check"><input type="checkbox" id="setSpeak"><span>Speak replies aloud</span></label>
+        <label class="check"><input type="checkbox" id="setWake"><span>Wake word &mdash; say &ldquo;Hey Jarvis&rdquo; to wake him</span></label>
+
+        <label class="check"><input type="checkbox" id="setAutoListen"><span>Open the microphone automatically &mdash; so the wake word works without touching anything</span></label>
+
+        <label class="field">
+          <span>When he wants to show a link</span>
+          <select id="setLinkMode">
+            <option value="card">Offer it &mdash; a card in the transcript I click</option>
+            <option value="open">Open it straight away in my browser</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Return to standby after</span>
+          <select id="setSleepAfter">
+            <option value="30">30 seconds of silence</option>
+            <option value="60">1 minute of silence</option>
+            <option value="120">2 minutes of silence</option>
+            <option value="300">5 minutes of silence</option>
+            <option value="0">never &mdash; stay awake</option>
+          </select>
+          <small>Only applies when the wake word is on. He keeps listening either way; this is about whether he acts on what he hears.</small>
+        </label>
+        <label class="field">
+          <span>Microphone</span>
+          <select id="setMicDevice"></select>
+          <small id="micDeviceNote" class="key-state">checking inputs…</small>
+        </label>
+
+        <div class="field">
+          <span>Speaker</span>
+          <small>
+            His voice always follows the Windows default output device &mdash; browsers
+            give web pages no way to route speech synthesis to a chosen speaker.
+            Detected outputs: <b id="outputList">&mdash;</b>.
+            To change which one he speaks through, set the default in
+            <b>Windows &rsaquo; Settings &rsaquo; System &rsaquo; Sound</b>.
+          </small>
+        </div>
+
+        <label class="field">
+          <span>Voice</span>
+          <select id="setVoice"></select>
+        </label>
+        <label class="field range">
+          <span>Rate <b id="rateVal">1.0&times;</b></span>
+          <input type="range" id="setRate" min="0.6" max="1.6" step="0.05">
+        </label>
+        <label class="field range">
+          <span>Pitch <b id="pitchVal">0.85</b></span>
+          <input type="range" id="setPitch" min="0.5" max="1.4" step="0.05">
+        </label>
+
+        <div class="key-row">
+          <button class="btn" id="voiceJarvis" type="button">Use the J.A.R.V.I.S. voice</button>
+          <span class="key-state" id="voiceNote">picks the best British male voice installed</span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Interface</legend>
+        <label class="field">
+          <span>Face</span>
+          <select id="setMask">
+            <option value="reactor">Arc reactor &mdash; the Iron Man core</option>
+            <option value="grid">Grid &mdash; clean HUD wireframe</option>
+            <option value="joker">Joker &mdash; carved grin, green</option>
+          </select>
+        </label>
+
+        <div class="field">
+          <span>Accent</span>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <label class="field range">
+          <span>Starfield density <b id="densVal">140</b></span>
+          <input type="range" id="setDensity" min="0" max="400" step="20">
+        </label>
+        <label class="field">
+          <span>Units</span>
+          <select id="setUnits">
+            <option value="metric">Metric &mdash; &deg;C, km/h</option>
+            <option value="imperial">Imperial &mdash; &deg;F, mph</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Memory</legend>
+        <p class="hint">Facts J.A.R.V.I.S. chose to remember about you. These are included in every conversation.</p>
+        <div class="memlist" id="memList"></div>
+        <button class="btn ghost" id="memClear">Forget everything</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Data</legend>
+        <div class="btn-row">
+          <button class="btn ghost" id="convoClear">Clear conversation</button>
+          <button class="btn ghost" id="convoExport">Export transcript</button>
+          <button class="btn danger" id="resetAll">Reset all settings</button>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+</div>
+
+<!-- 10 · HUD frame. Always there, never in the way. -->
+<div class="hud-frame" aria-hidden="true"></div>
+
+<!-- 13 · Diagnostic sweep. One pass, every few minutes. -->
+<div class="diag-sweep" id="diagSweep" aria-hidden="true"></div>
+
+<!-- 6 · Ambient mode. A wall display spends most of its life not being talked
+     to; this is what it does then. Any voice or keystroke dismisses it. -->
+<div class="ambient" id="ambient" hidden>
+  <div class="ambient-clock" id="ambClock">--:--</div>
+  <div class="ambient-date" id="ambDate"></div>
+  <div class="ambient-row">
+    <div class="ambient-wx"><b id="ambTemp">--</b><span id="ambDesc"></span></div>
+    <div class="ambient-np" id="ambTrack" hidden><b id="ambTrackName"></b><span id="ambArtist"></span></div>
+  </div>
+  <div class="ambient-hint">say &ldquo;Hey Jarvis&rdquo; &nbsp;&middot;&nbsp; or touch anything</div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="js/core.js"></script>
+<script src="js/starfield.js"></script>
+<script src="js/orb.js"></script>
+<script src="js/face.js"></script>
+<script src="js/telemetry.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/brain.js"></script>
+<script src="js/watch.js"></script>
+<script src="js/palette.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #35d6ff; } a:hover { color: #7ee6ff; }
+    .m  { font-family: 'Share Tech Mono', monospace; }
+    .ob { font-family: Orbitron, sans-serif; }
+    .bx { position: relative; border: 1px solid rgba(53,214,255,.2); background: rgba(5,13,19,.7); }
+    .bt { position: absolute; top: -1px; left: -1px; padding: 1px 8px; background: #0c222d;
+          border: 1px solid rgba(53,214,255,.3); border-left: 2px solid #35d6ff;
+          font-family: 'Share Tech Mono', monospace; font-size: 7.5px; letter-spacing: .2em;
+          color: #7fd8ef; text-transform: uppercase; }
+    .bt.o { background: #2b1607; border-color: rgba(255,140,66,.38); border-left-color: #ff8c42; color: #ffab72; }
+    .lb { font-family: 'Share Tech Mono', monospace; font-size: 7.5px; letter-spacing: .14em;
+          color: #456478; text-transform: uppercase; }
+    .vl { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #b6d9e8; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 1.5px 0; }
+  </style>
+</helmet>
+
+<div style="width:1600px;height:900px;background:#02070a;color:#b6d9e8;
+            font-family:'Share Tech Mono',monospace;position:relative;box-sizing:border-box;overflow:hidden">
+
+  <div style="position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.52) 0 1px,transparent 1px 3px)"></div>
+
+  <!-- ===== header ===== -->
+  <div style="position:absolute;top:0;left:0;right:0;height:30px;display:flex;align-items:center;
+              gap:18px;padding:0 14px;border-bottom:1px solid rgba(53,214,255,.2);background:#040c11">
+    <span class="ob" style="font-size:11px;font-weight:900;letter-spacing:.26em;color:#dff6ff">J.A.R.V.I.S.</span>
+    <span class="m" style="font-size:7.5px;letter-spacing:.18em;color:#ff8c42">MK-VII / DEEP SCAN</span>
+    <div style="flex:1 1 auto;height:5px;background-image:repeating-linear-gradient(90deg,rgba(53,214,255,.3) 0 1px,transparent 1px 8px)"></div>
+    <span class="m" style="font-size:8px;color:#456478">SEQ <span style="color:#b6d9e8">00417</span></span>
+    <span class="m" style="font-size:8px;color:#456478">REF <span style="color:#b6d9e8">24.50.36</span></span>
+    <span class="m" style="font-size:8px;color:#456478">SYS <span style="color:#3ddc97">NOMINAL</span></span>
+    <span class="ob" style="font-size:14px;letter-spacing:.1em;color:#35d6ff">18:48:37</span>
+  </div>
+
+  <!-- ===== the scan : deliberately off-centre ===== -->
+  <div class="bx" style="position:absolute;left:10px;top:38px;width:960px;bottom:172px;overflow:hidden">
+    <span class="bt">SCAN / CORE.TRACK</span>
+    <span class="m" style="position:absolute;top:3px;right:10px;font-size:7.5px;letter-spacing:.14em;color:#456478">
+      &minus;256.1251.35 &nbsp; RAD 0.34876 &nbsp; VEL 0.245</span>
+
+    <svg width="100%" height="100%" viewBox="0 0 958 690" style="position:absolute;inset:0">
+      <g stroke="rgba(53,214,255,.14)"><line x1="0" y1="345" x2="958" y2="345"/><line x1="440" y1="0" x2="440" y2="690"/></g>
+
+      <!-- graduated frame scale down the right edge of the plot -->
+      <g stroke="rgba(53,214,255,.28)" stroke-width="1">
+        <line x1="900" y1="60" x2="912" y2="60"/><line x1="900" y1="140" x2="912" y2="140"/>
+        <line x1="900" y1="220" x2="912" y2="220"/><line x1="900" y1="300" x2="912" y2="300"/>
+        <line x1="900" y1="380" x2="912" y2="380"/><line x1="900" y1="460" x2="912" y2="460"/>
+        <line x1="900" y1="540" x2="912" y2="540"/><line x1="900" y1="620" x2="912" y2="620"/>
+        <line x1="906" y1="60" x2="906" y2="620"/>
+      </g>
+
+      <g fill="none">
+        <circle cx="440" cy="345" r="308" stroke="#35d6ff" stroke-opacity=".1" stroke-dasharray="2 10"/>
+        <circle cx="440" cy="345" r="266" stroke="#35d6ff" stroke-opacity=".2"/>
+        <circle cx="440" cy="345" r="222" stroke="#35d6ff" stroke-opacity=".1" stroke-dasharray="1 5"/>
+        <circle cx="440" cy="345" r="180" stroke="#35d6ff" stroke-opacity=".26" stroke-width="1.3" stroke-dasharray="214 166"/>
+        <circle cx="440" cy="345" r="140" stroke="#35d6ff" stroke-opacity=".12" stroke-dasharray="1 4"/>
+        <ellipse cx="440" cy="345" rx="308" ry="88" stroke="#35d6ff" stroke-opacity=".22"/>
+        <ellipse cx="440" cy="345" rx="308" ry="88" stroke="#35d6ff" stroke-opacity=".12" transform="rotate(-22 440 345)"/>
+      </g>
+      <circle cx="440" cy="345" r="266" fill="none" stroke="#ff8c42" stroke-opacity=".6" stroke-width="2.2"
+              stroke-dasharray="104 1566" transform="rotate(-64 440 345)"/>
+
+      <!-- dense point cloud -->
+      <g fill="#35d6ff" opacity=".45">
+        <circle cx="286" cy="256" r="1.3"/><circle cx="330" cy="212" r="1"/><circle cx="382" cy="186" r="1.4"/>
+        <circle cx="440" cy="172" r="1.1"/><circle cx="500" cy="182" r="1.3"/><circle cx="552" cy="208" r="1"/>
+        <circle cx="596" cy="250" r="1.4"/><circle cx="620" cy="304" r="1.1"/><circle cx="624" cy="362" r="1.3"/>
+        <circle cx="602" cy="418" r="1"/><circle cx="560" cy="460" r="1.4"/><circle cx="508" cy="488" r="1.1"/>
+        <circle cx="444" cy="498" r="1.3"/><circle cx="382" cy="486" r="1"/><circle cx="330" cy="460" r="1.4"/>
+        <circle cx="290" cy="418" r="1.1"/><circle cx="266" cy="362" r="1.3"/><circle cx="266" cy="302" r="1"/>
+        <circle cx="352" cy="300" r=".9"/><circle cx="398" cy="270" r=".9"/><circle cx="486" cy="272" r=".9"/>
+        <circle cx="532" cy="304" r=".9"/><circle cx="556" cy="372" r=".9"/><circle cx="518" cy="424" r=".9"/>
+        <circle cx="440" cy="442" r=".9"/><circle cx="366" cy="422" r=".9"/><circle cx="326" cy="370" r=".9"/>
+        <circle cx="200" cy="200" r=".8"/><circle cx="700" cy="500" r=".8"/><circle cx="160" cy="480" r=".8"/>
+        <circle cx="720" cy="220" r=".8"/><circle cx="120" cy="330" r=".8"/><circle cx="760" cy="360" r=".8"/>
+      </g>
+
+      <!-- tracked contacts -->
+      <g stroke="#ff8c42" stroke-width="1.1" fill="none">
+        <line x1="440" y1="345" x2="668" y2="176"/><circle cx="668" cy="176" r="6"/><circle cx="668" cy="176" r="2" fill="#ff8c42"/>
+      </g>
+      <g stroke="#35d6ff" stroke-width="1.1" fill="none" opacity=".8">
+        <line x1="440" y1="345" x2="214" y2="498"/><circle cx="214" cy="498" r="5"/><circle cx="214" cy="498" r="1.8" fill="#35d6ff"/>
+        <line x1="440" y1="345" x2="196" y2="238"/><circle cx="196" cy="238" r="4"/>
+      </g>
+    </svg>
+
+    <!-- the core at the heart of the scan -->
+    <div style="position:absolute;left:440px;top:calc(38px + 345px - 38px);transform:translate(-50%,-50%);margin-top:-8px">
+      <svg width="216" height="216" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(53,214,255,.22)" stroke-width="1"/>
+        <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(53,214,255,.6)" stroke-width="1.8"/>
+        <g stroke="#35d6ff" stroke-width="7.5" opacity=".95">
+          <path d="M60 22 A38 38 0 0 1 87 33" fill="none"/><path d="M92 40 A38 38 0 0 1 96 66" fill="none"/>
+          <path d="M92 80 A38 38 0 0 1 71 96" fill="none"/><path d="M49 96 A38 38 0 0 1 28 80" fill="none"/>
+          <path d="M24 66 A38 38 0 0 1 28 40" fill="none"/><path d="M33 33 A38 38 0 0 1 60 22" fill="none" opacity=".45"/>
+        </g>
+        <circle cx="60" cy="60" r="25" fill="rgba(53,214,255,.12)" stroke="rgba(53,214,255,.6)"/>
+        <path d="M60 43 L75 69 L45 69 Z" fill="#c4f7ff"/>
+        <circle cx="60" cy="60" r="10" fill="#f4feff"/>
+      </svg>
+    </div>
+
+    <div class="m" style="position:absolute;left:672px;top:150px;font-size:7.5px;letter-spacing:.12em;color:#ff8c42;line-height:1.7">
+      MIC.UG-08S<br><span style="color:#456478">4c4a:4155</span><br><span style="color:#3ddc97">TRACKING</span></div>
+    <div class="m" style="position:absolute;left:96px;top:508px;font-size:7.5px;letter-spacing:.12em;color:#7fd8ef;line-height:1.7">
+      ECHO.GUARD<br><span style="color:#456478">win 20.0s</span><br><span style="color:#3ddc97">ARMED</span></div>
+
+    <div style="position:absolute;bottom:14px;left:0;right:0;text-align:center">
+      <div class="ob" style="font-size:14px;letter-spacing:.46em;color:#35d6ff">STANDBY</div>
+      <div class="m" style="font-size:8px;letter-spacing:.22em;color:#456478;margin-top:4px">LISTENING &mdash; JUST TALK</div>
+    </div>
+  </div>
+
+  <!-- ===== right telemetry stack ===== -->
+  <div style="position:absolute;right:10px;top:38px;width:610px;bottom:172px;
+              display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);gap:8px">
+
+    <div class="bx" style="padding:14px 10px 9px"><span class="bt">PWR</span>
+      <div style="display:flex;gap:9px;align-items:center">
+        <svg width="46" height="46" viewBox="0 0 60 60" style="flex:none">
+          <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(61,220,151,.12)" stroke-width="4"/>
+          <circle cx="30" cy="30" r="25" fill="none" stroke="#3ddc97" stroke-width="4" stroke-dasharray="157" transform="rotate(-90 30 30)"/>
+          <text x="30" y="34" text-anchor="middle" font-family="Orbitron" font-size="12" fill="#3ddc97">100</text>
+        </svg>
+        <div style="flex:1 1 auto">
+          <div class="row"><span class="lb">fps</span><span class="vl">60.0</span></div>
+          <div class="row"><span class="lb">frame</span><span class="vl">16.712</span></div>
+          <div class="row"><span class="lb">heap</span><span class="vl">5.04M</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 9px"><span class="bt">NET</span>
+      <div class="row"><span class="lb">status</span><span class="vl" style="color:#3ddc97">online</span></div>
+      <div class="row"><span class="lb">down</span><span class="vl">1.400</span></div>
+      <div class="row"><span class="lb">rtt</span><span class="vl">100.0</span></div>
+      <svg width="100%" height="20" viewBox="0 0 280 20" preserveAspectRatio="none" style="margin-top:5px">
+        <polyline points="0,16 28,13 56,15 84,8 112,11 140,6 168,9 196,4 224,7 252,3 280,5" fill="none" stroke="#35d6ff" stroke-width="1"/>
+      </svg>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 9px;grid-column:span 2"><span class="bt o">MARKET / FUTURES</span>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">
+        <div><div class="lb">DOW</div><div class="ob" style="font-size:13px;color:#dff6ff;margin-top:2px">53709</div><div class="m" style="font-size:8.5px;color:#3ddc97">+0.35%</div>
+          <svg width="100%" height="18" viewBox="0 0 60 18" preserveAspectRatio="none" style="margin-top:3px"><polyline points="0,14 12,12 24,13 36,7 48,9 60,3" fill="none" stroke="#3ddc97" stroke-width="1"/></svg></div>
+        <div><div class="lb">NDX</div><div class="ob" style="font-size:13px;color:#dff6ff;margin-top:2px">29544</div><div class="m" style="font-size:8.5px;color:#3ddc97">+0.87%</div>
+          <svg width="100%" height="18" viewBox="0 0 60 18" preserveAspectRatio="none" style="margin-top:3px"><polyline points="0,15 12,13 24,9 36,10 48,5 60,2" fill="none" stroke="#3ddc97" stroke-width="1"/></svg></div>
+        <div><div class="lb">BTC</div><div class="ob" style="font-size:13px;color:#dff6ff;margin-top:2px">78776</div><div class="m" style="font-size:8.5px;color:#ff5f6b">&minus;0.32%</div>
+          <svg width="100%" height="18" viewBox="0 0 60 18" preserveAspectRatio="none" style="margin-top:3px"><polyline points="0,3 12,5 24,4 36,10 48,9 60,14" fill="none" stroke="#ff5f6b" stroke-width="1"/></svg></div>
+        <div><div class="lb">GOLD</div><div class="ob" style="font-size:13px;color:#dff6ff;margin-top:2px">4680.9</div><div class="m" style="font-size:8.5px;color:#ff8c42">+0.59%</div>
+          <svg width="100%" height="18" viewBox="0 0 60 18" preserveAspectRatio="none" style="margin-top:3px"><polyline points="0,13 12,11 24,12 36,6 48,5 60,3" fill="none" stroke="#ff8c42" stroke-width="1"/></svg></div>
+      </div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 9px"><span class="bt o">CONTACT</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px">
+        <div style="display:flex;gap:5px">
+          <div style="width:19px;height:19px;border-radius:50%;background:#552583;display:grid;place-items:center;font-size:6px;font-weight:700;color:#fff">LAL</div>
+          <div style="width:19px;height:19px;border-radius:50%;background:#1d428a;display:grid;place-items:center;font-size:6px;font-weight:700;color:#fff">GSW</div>
+        </div>
+        <span class="ob" style="font-size:16px;color:#dff6ff">98:94</span>
+      </div>
+      <div class="row" style="margin-top:5px"><span class="lb">period</span><span class="vl" style="color:#ff8c42">Q4 04:12</span></div>
+      <div class="row"><span class="lb">lad:atl</span><span class="vl" style="color:#3ddc97">05:06 F</span></div>
+      <div class="row"><span class="lb">lv:hou</span><span class="vl" style="color:#3ddc97">22:20 F</span></div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 9px"><span class="bt">ATMOS</span>
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="ob" style="font-size:28px;color:#ff8c42;line-height:1">87<span style="font-size:11px">°</span></div>
+        <div style="flex:1 1 auto">
+          <div class="row"><span class="lb">sky</span><span class="vl">clear</span></div>
+          <div class="row"><span class="lb">feels</span><span class="vl">91.0</span></div>
+          <div class="row"><span class="lb">hum</span><span class="vl">047</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 9px;grid-column:span 2"><span class="bt">TRANSCRIPT</span>
+      <div style="display:flex;gap:16px">
+        <div style="flex:1 1 auto;min-width:0">
+          <div class="m" style="font-size:7px;letter-spacing:.2em;color:#ff8c42">ZERO</div>
+          <div style="font-size:11.5px;color:#dff6ff;font-family:Inter,sans-serif;margin-top:3px">What is the Atlanta Braves score?</div>
+          <div class="m" style="font-size:7px;letter-spacing:.2em;color:#35d6ff;margin-top:9px">J.A.R.V.I.S.</div>
+          <div style="font-size:11.5px;line-height:1.55;color:#9fc2d4;font-family:Inter,sans-serif;margin-top:3px">Braves took it 6&ndash;5 against the Dodgers at Truist Park. Final.</div>
+        </div>
+        <div style="flex:none;width:150px;display:flex;flex-direction:column;gap:5px;justify-content:center">
+          <span class="m" style="font-size:7px;letter-spacing:.12em;padding:2px 6px;border:1px solid rgba(61,220,151,.38);color:#3ddc97;text-align:center">ESPN &middot; 0.4s</span>
+          <span class="m" style="font-size:7px;letter-spacing:.12em;padding:2px 6px;border:1px solid rgba(53,214,255,.38);color:#35d6ff;text-align:center">MEASURED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== bottom waveform bank ===== -->
+  <div style="position:absolute;left:10px;right:10px;bottom:10px;height:152px;display:grid;
+              grid-template-columns:repeat(4,1fr);gap:8px">
+    <div class="bx" style="padding:14px 10px 8px"><span class="bt">VOX / INPUT</span>
+      <svg width="100%" height="66" viewBox="0 0 360 66" preserveAspectRatio="none" style="margin-top:4px">
+        <g stroke="#35d6ff" stroke-width="1.6" opacity=".85">
+          <line x1="6" y1="33" x2="6" y2="33"/><line x1="24" y1="24" x2="24" y2="42"/><line x1="42" y1="10" x2="42" y2="56"/>
+          <line x1="60" y1="28" x2="60" y2="38"/><line x1="78" y1="4" x2="78" y2="62"/><line x1="96" y1="18" x2="96" y2="48"/>
+          <line x1="114" y1="30" x2="114" y2="36"/><line x1="132" y1="12" x2="132" y2="54"/><line x1="150" y1="26" x2="150" y2="40"/>
+          <line x1="168" y1="2" x2="168" y2="64"/><line x1="186" y1="20" x2="186" y2="46"/><line x1="204" y1="31" x2="204" y2="35"/>
+          <line x1="222" y1="14" x2="222" y2="52"/><line x1="240" y1="27" x2="240" y2="39"/><line x1="258" y1="8" x2="258" y2="58"/>
+          <line x1="276" y1="23" x2="276" y2="43"/><line x1="294" y1="31" x2="294" y2="35"/><line x1="312" y1="17" x2="312" y2="49"/>
+          <line x1="330" y1="28" x2="330" y2="38"/><line x1="348" y1="32" x2="348" y2="34"/>
+        </g>
+      </svg>
+      <div class="row" style="margin-top:3px"><span class="lb">peak</span><span class="vl">0.412</span></div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 8px"><span class="bt o">SPECTRUM</span>
+      <svg width="100%" height="66" viewBox="0 0 360 66" preserveAspectRatio="none" style="margin-top:4px">
+        <g fill="#ff8c42" opacity=".85">
+          <rect x="4" y="42" width="10" height="24"/><rect x="20" y="30" width="10" height="36"/><rect x="36" y="48" width="10" height="18"/>
+          <rect x="52" y="18" width="10" height="48"/><rect x="68" y="36" width="10" height="30"/><rect x="84" y="52" width="10" height="14"/>
+          <rect x="100" y="24" width="10" height="42"/><rect x="116" y="40" width="10" height="26"/><rect x="132" y="12" width="10" height="54"/>
+          <rect x="148" y="34" width="10" height="32"/><rect x="164" y="46" width="10" height="20"/><rect x="180" y="22" width="10" height="44"/>
+        </g>
+        <g fill="#35d6ff" opacity=".75">
+          <rect x="196" y="38" width="10" height="28"/><rect x="212" y="50" width="10" height="16"/><rect x="228" y="26" width="10" height="40"/>
+          <rect x="244" y="43" width="10" height="23"/><rect x="260" y="32" width="10" height="34"/><rect x="276" y="54" width="10" height="12"/>
+          <rect x="292" y="20" width="10" height="46"/><rect x="308" y="41" width="10" height="25"/><rect x="324" y="49" width="10" height="17"/>
+          <rect x="340" y="35" width="10" height="31"/>
+        </g>
+      </svg>
+      <div class="row" style="margin-top:3px"><span class="lb">bands</span><span class="vl">022</span></div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 8px"><span class="bt">EVENT / LOG</span>
+      <div style="display:flex;flex-direction:column;gap:2px;margin-top:2px">
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:48:05</span> <span style="color:#3ddc97">MIC.LIVE</span></div>
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:48:05</span> <span style="color:#3ddc97">VOX.ENGAGED</span></div>
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:48:10</span> <span style="color:#7fa3ba">RESTORE 010</span></div>
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:48:20</span> <span style="color:#7fa3ba">HEARD &raquo; braves</span></div>
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:48:25</span> <span style="color:#35d6ff">PRECEDENT 002</span></div>
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:48:34</span> <span style="color:#ff8c42">ECHO.REJECT</span></div>
+        <div class="m" style="font-size:8px"><span style="color:#2c4a5b">18:49:02</span> <span style="color:#3ddc97">RENDER.OK</span></div>
+      </div>
+    </div>
+
+    <div class="bx" style="padding:14px 10px 8px"><span class="bt">SESSION / MATRIX</span>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0 12px;margin-top:2px">
+        <div class="row"><span class="lb">up</span><span class="vl">00:02:33</span></div>
+        <div class="row"><span class="lb">turns</span><span class="vl">001</span></div>
+        <div class="row"><span class="lb">web</span><span class="vl">000</span></div>
+        <div class="row"><span class="lb">jobs</span><span class="vl" style="color:#ff8c42">024</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(16,1fr);gap:2px;margin-top:8px">
+        <div style="aspect-ratio:1;background:#35d6ff;opacity:.7"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#ff8c42;opacity:.8"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#35d6ff;opacity:.5"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#35d6ff;opacity:.65"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#ff8c42;opacity:.55"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#35d6ff;opacity:.45"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#35d6ff;opacity:.6"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#ff8c42;opacity:.7"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#35d6ff;opacity:.4"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#35d6ff;opacity:.55"></div><div style="aspect-ratio:1;background:#122a36"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#ff8c42;opacity:.5"></div>
+        <div style="aspect-ratio:1;background:#122a36"></div><div style="aspect-ratio:1;background:#122a36"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

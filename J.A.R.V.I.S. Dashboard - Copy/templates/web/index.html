@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{name}</title>
+<meta name="description" content="{name}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tailwind.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container between">
+    <strong>{name}</strong>
+    <nav class="site-nav" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="section container center stack stagger">
+    <p class="eyebrow">Introducing</p>
+    <h1>{name}</h1>
+    <p class="lead">One clear sentence about what this is and who it is for.
+       Replace it with the real promise — the specific one, not the safe one.</p>
+    <div class="cluster" style="justify-content:center">
+      <a class="btn" href="#contact">Get started</a>
+      <a class="btn btn-ghost" href="#how">See how it works</a>
+    </div>
+  </section>
+
+  <section class="section container stack-lg" id="features">
+    <div class="stack">
+      <p class="eyebrow">Features</p>
+      <h2>What it does</h2>
+    </div>
+    <div class="grid">
+      <article class="card card-hover on-scroll stack">
+        <span class="tag">Fast</span>
+        <h3>First thing</h3>
+        <p class="muted">A specific claim with a number in it beats an adjective.</p>
+      </article>
+      <article class="card card-hover on-scroll stack">
+        <span class="tag">Simple</span>
+        <h3>Second thing</h3>
+        <p class="muted">Say what it removes from the reader's day.</p>
+      </article>
+      <article class="card card-hover on-scroll stack">
+        <span class="tag">Yours</span>
+        <h3>Third thing</h3>
+        <p class="muted">End on the one that matters most to them.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section container stack-lg" id="how">
+    <div class="stack">
+      <p class="eyebrow">How it works</p>
+      <h2>Three steps, no surprises</h2>
+    </div>
+    <div class="grid stagger">
+      <div class="stack on-scroll"><h3>1. Start</h3><p class="muted">What they do first.</p></div>
+      <div class="stack on-scroll"><h3>2. Build</h3><p class="muted">What happens next.</p></div>
+      <div class="stack on-scroll"><h3>3. Ship</h3><p class="muted">What they end up with.</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="contact" style="background:var(--surface)">
+    <div class="narrow stack center">
+      <h2>Get in touch</h2>
+      <p class="muted">Point this form at a real endpoint before shipping it.</p>
+      <form class="stack" style="width:100%;text-align:left" onsubmit="return false">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required>
+        </div>
+        <div class="field">
+          <label for="msg">Message</label>
+          <textarea id="msg" rows="4" placeholder="What are you after?"></textarea>
+        </div>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container between">
+    <span>&copy; <span id="year"></span> {name}</span>
+    <span class="muted">Built locally</span>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="base.js"></script>
+</body>
+</html>

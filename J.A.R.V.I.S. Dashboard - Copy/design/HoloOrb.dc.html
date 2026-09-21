@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #35d6ff; } a:hover { color: #7ee6ff; }
+    .m  { font-family: 'Share Tech Mono', monospace; }
+    .ob { font-family: Orbitron, sans-serif; }
+    /* Soft holographic glass — rounded, lifted, faintly lit from within. */
+    .gl { background: linear-gradient(160deg, rgba(24,52,72,.5), rgba(8,20,30,.62) 70%);
+          border: 1px solid rgba(90,200,240,.2); border-radius: 12px; padding: 13px 15px;
+          box-shadow: inset 0 1px 0 rgba(150,230,255,.13), 0 0 34px -12px rgba(53,214,255,.34); }
+    .hd { font-family: 'Share Tech Mono', monospace; font-size: 8.5px; letter-spacing: .24em;
+          text-transform: uppercase; color: #6fb6d4; }
+    .lb { font-family: 'Share Tech Mono', monospace; font-size: 8px; letter-spacing: .14em;
+          text-transform: uppercase; color: #4a7a92; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+           font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #b9dced; }
+    .row i { font-style: normal; font-size: 8px; letter-spacing: .14em;
+             text-transform: uppercase; color: #4a7a92; }
+    .dock { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+            border: 1px solid rgba(90,200,240,.22); background: rgba(18,44,62,.55); }
+  </style>
+</helmet>
+
+<div style="width:1600px;height:900px;position:relative;box-sizing:border-box;overflow:hidden;
+            color:#b9dced;font-family:Inter,sans-serif;
+            background:
+              radial-gradient(760px 520px at 50% 46%, rgba(53,214,255,.16), transparent 62%),
+              radial-gradient(1400px 900px at 50% 50%, #0a1c28, #04090e 74%)">
+
+  <!-- depth: soft vertical light shafts, as in the reference -->
+  <div style="position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:repeating-linear-gradient(90deg, rgba(53,214,255,.045) 0 2px, transparent 2px 120px)"></div>
+
+  <!-- full-frame reticle: the thing that makes it read as a projection -->
+  <svg style="position:absolute;inset:0;pointer-events:none" width="1600" height="900">
+    <g stroke="rgba(120,220,255,.2)" stroke-width="1">
+      <line x1="800" y1="66" x2="800" y2="330"/><line x1="800" y1="560" x2="800" y2="834"/>
+      <line x1="300" y1="446" x2="574" y2="446"/><line x1="1026" y1="446" x2="1300" y2="446"/>
+    </g>
+    <g stroke="rgba(120,220,255,.34)" stroke-width="1.4" fill="none">
+      <path d="M760 66 L800 40 L840 66"/><path d="M760 826 L800 852 L840 826"/>
+      <path d="M300 406 L272 446 L300 486"/><path d="M1300 406 L1328 446 L1300 486"/>
+    </g>
+  </svg>
+
+  <!-- masthead -->
+  <div style="position:absolute;top:26px;left:0;right:0;text-align:center">
+    <div class="ob" style="font-size:23px;font-weight:900;letter-spacing:.4em;color:#dff6ff;text-indent:.4em">JARVIS</div>
+    <div class="m" style="font-size:8px;letter-spacing:.34em;color:#4a7a92;margin-top:6px">MK VII &middot; ZEROPULSE &middot; ONLINE</div>
+  </div>
+
+  <!-- ============ the orb ============ -->
+  <div style="position:absolute;left:50%;top:446px;transform:translate(-50%,-50%)">
+    <svg width="520" height="520" viewBox="0 0 400 400">
+      <defs>
+        <radialGradient id="glow"><stop offset="0" stop-color="rgba(53,214,255,.34)"/><stop offset="1" stop-color="rgba(53,214,255,0)"/></radialGradient>
+      </defs>
+      <circle cx="200" cy="200" r="190" fill="url(#glow)"/>
+
+      <!-- orbital ellipses, the signature of the reference image -->
+      <g fill="none" stroke="#7fe3ff" stroke-opacity=".4">
+        <ellipse cx="200" cy="200" rx="188" ry="56"/>
+        <ellipse cx="200" cy="200" rx="188" ry="56" transform="rotate(-18 200 200)" stroke-opacity=".22"/>
+        <ellipse cx="200" cy="200" rx="150" ry="150" stroke-opacity=".16"/>
+      </g>
+      <!-- a bright arc riding the front of the orbit -->
+      <path d="M22 214 A188 56 0 0 0 378 214" fill="none" stroke="#9ff0ff" stroke-width="2.4" opacity=".8"/>
+
+      <!-- latitude shells -->
+      <g fill="none" stroke="#35d6ff" stroke-opacity=".3">
+        <ellipse cx="200" cy="200" rx="128" ry="128"/>
+        <ellipse cx="200" cy="200" rx="128" ry="88"/>
+        <ellipse cx="200" cy="200" rx="128" ry="46"/>
+        <ellipse cx="200" cy="200" rx="46" ry="128"/>
+        <ellipse cx="200" cy="200" rx="88" ry="128"/>
+      </g>
+
+      <!-- particle field -->
+      <g fill="#9ff0ff" opacity=".55">
+        <circle cx="86" cy="150" r="1.5"/><circle cx="128" cy="98" r="1.1"/><circle cx="196" cy="72" r="1.6"/>
+        <circle cx="268" cy="96" r="1.2"/><circle cx="318" cy="148" r="1.5"/><circle cx="340" cy="212" r="1.1"/>
+        <circle cx="316" cy="278" r="1.6"/><circle cx="262" cy="322" r="1.2"/><circle cx="196" cy="336" r="1.5"/>
+        <circle cx="130" cy="316" r="1.1"/><circle cx="84" cy="268" r="1.6"/><circle cx="62" cy="204" r="1.2"/>
+        <circle cx="150" cy="132" r="1"/><circle cx="248" cy="140" r="1"/><circle cx="286" cy="230" r="1"/>
+        <circle cx="222" cy="296" r="1"/><circle cx="128" cy="252" r="1"/><circle cx="112" cy="192" r="1"/>
+      </g>
+
+      <!-- graduation ring -->
+      <circle cx="200" cy="200" r="166" fill="none" stroke="#35d6ff" stroke-opacity=".4" stroke-dasharray="1 8"/>
+
+      <!-- the arc reactor, kept exactly as it is -->
+      <g transform="translate(140,140) scale(.5)">
+        <circle cx="120" cy="120" r="108" fill="none" stroke="rgba(53,214,255,.28)" stroke-width="2"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="rgba(53,214,255,.65)" stroke-width="3.4"/>
+        <g stroke="#35d6ff" stroke-width="15" opacity=".95">
+          <path d="M120 42 A78 78 0 0 1 175 65" fill="none"/><path d="M186 79 A78 78 0 0 1 195 132" fill="none"/>
+          <path d="M186 161 A78 78 0 0 1 143 194" fill="none"/><path d="M97 194 A78 78 0 0 1 54 161" fill="none"/>
+          <path d="M45 132 A78 78 0 0 1 54 79" fill="none"/><path d="M65 65 A78 78 0 0 1 120 42" fill="none" opacity=".45"/>
+        </g>
+        <circle cx="120" cy="120" r="50" fill="rgba(53,214,255,.14)" stroke="rgba(53,214,255,.7)" stroke-width="2"/>
+        <path d="M120 86 L151 141 L89 141 Z" fill="#d3f9ff"/>
+        <circle cx="120" cy="120" r="20" fill="#f6feff"/>
+      </g>
+    </svg>
+
+    <div style="position:absolute;bottom:-16px;left:0;right:0;text-align:center">
+      <div class="ob" style="font-size:13px;letter-spacing:.5em;color:#7fe3ff;text-indent:.5em">STANDBY</div>
+    </div>
+  </div>
+
+  <!-- ============ left panels ============ -->
+  <div style="position:absolute;left:26px;top:96px;width:288px;display:flex;flex-direction:column;gap:11px">
+    <div class="gl">
+      <div class="hd">Systems</div>
+      <div style="display:flex;gap:12px;margin-top:11px">
+        <svg width="46" height="46" viewBox="0 0 60 60" style="flex:none">
+          <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(61,220,151,.14)" stroke-width="4"/>
+          <circle cx="30" cy="30" r="25" fill="none" stroke="#3ddc97" stroke-width="4" stroke-dasharray="157" transform="rotate(-90 30 30)" stroke-linecap="round"/>
+          <text x="30" y="34" text-anchor="middle" font-family="Orbitron" font-size="12" fill="#3ddc97">100</text>
+        </svg>
+        <svg width="46" height="46" viewBox="0 0 60 60" style="flex:none">
+          <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,140,66,.14)" stroke-width="4"/>
+          <circle cx="30" cy="30" r="25" fill="none" stroke="#ff8c42" stroke-width="4" stroke-dasharray="116 41" transform="rotate(-90 30 30)" stroke-linecap="round"/>
+          <text x="30" y="34" text-anchor="middle" font-family="Orbitron" font-size="12" fill="#ff8c42">60</text>
+        </svg>
+        <div style="flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:4px">
+          <div class="row"><i>heap</i><span>5.04M</span></div>
+          <div class="row"><i>thrd</i><span>012</span></div>
+          <div class="row"><i>rtt</i><span>100ms</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gl">
+      <div class="hd">Market watch</div>
+      <svg width="100%" height="66" viewBox="0 0 256 66" preserveAspectRatio="none" style="margin-top:9px">
+        <g stroke="rgba(120,220,255,.1)"><line x1="0" y1="16" x2="256" y2="16"/><line x1="0" y1="33" x2="256" y2="33"/><line x1="0" y1="50" x2="256" y2="50"/></g>
+        <polyline points="0,52 21,46 42,49 64,34 85,40 106,28 128,33 149,20 170,26 192,14 213,19 235,9 256,6" fill="none" stroke="#3ddc97" stroke-width="1.4"/>
+        <polyline points="0,22 21,26 42,24 64,32 85,29 106,38 128,35 149,42 170,39 192,47 213,44 235,52 256,55" fill="none" stroke="#ff8c42" stroke-width="1.4" opacity=".8"/>
+      </svg>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px 14px;margin-top:9px">
+        <div class="row"><i>dow</i><span style="color:#3ddc97">+0.35%</span></div>
+        <div class="row"><i>ndx</i><span style="color:#3ddc97">+0.87%</span></div>
+        <div class="row"><i>btc</i><span style="color:#ff5f6b">&minus;0.32%</span></div>
+        <div class="row"><i>gold</i><span style="color:#ff8c42">+0.59%</span></div>
+      </div>
+    </div>
+
+    <div class="gl">
+      <div class="hd">Load history</div>
+      <svg width="100%" height="58" viewBox="0 0 256 58" preserveAspectRatio="none" style="margin-top:9px">
+        <g fill="#35d6ff" opacity=".75">
+          <rect x="2" y="30" width="7" height="28"/><rect x="14" y="20" width="7" height="38"/><rect x="26" y="38" width="7" height="20"/>
+          <rect x="38" y="12" width="7" height="46"/><rect x="50" y="26" width="7" height="32"/><rect x="62" y="42" width="7" height="16"/>
+          <rect x="74" y="18" width="7" height="40"/><rect x="86" y="32" width="7" height="26"/><rect x="98" y="8" width="7" height="50"/>
+          <rect x="110" y="28" width="7" height="30"/><rect x="122" y="40" width="7" height="18"/><rect x="134" y="16" width="7" height="42"/>
+        </g>
+        <g fill="#ff8c42" opacity=".8">
+          <rect x="146" y="34" width="7" height="24"/><rect x="158" y="22" width="7" height="36"/><rect x="170" y="44" width="7" height="14"/>
+          <rect x="182" y="14" width="7" height="44"/><rect x="194" y="30" width="7" height="28"/><rect x="206" y="38" width="7" height="20"/>
+          <rect x="218" y="20" width="7" height="38"/><rect x="230" y="33" width="7" height="25"/><rect x="242" y="26" width="7" height="32"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ============ right panels ============ -->
+  <div style="position:absolute;right:26px;top:96px;width:288px;display:flex;flex-direction:column;gap:11px">
+    <div class="gl">
+      <div class="hd">Atmosphere</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:10px">
+        <div class="ob" style="font-size:36px;color:#ff8c42;line-height:1">87<span style="font-size:14px">°</span></div>
+        <div style="flex:1 1 auto">
+          <div class="row"><i>sky</i><span>clear</span></div>
+          <div class="row"><i>feels</i><span>91°</span></div>
+          <div class="row"><i>hum</i><span>47%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gl" style="border-color:rgba(255,140,66,.34)">
+      <div class="hd" style="color:#ffab72">Live &mdash; Lakers</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:22px;height:22px;border-radius:50%;background:#552583;display:grid;place-items:center;font-size:7px;font-weight:700;color:#fff">LAL</div>
+          <div style="width:22px;height:22px;border-radius:50%;background:#1d428a;display:grid;place-items:center;font-size:7px;font-weight:700;color:#fff">GSW</div>
+        </div>
+        <div class="ob" style="font-size:19px;color:#dff6ff">98&ndash;94</div>
+        <div class="m" style="font-size:9.5px;color:#ff8c42">Q4 4:12</div>
+      </div>
+    </div>
+
+    <div class="gl" style="flex:1 1 auto">
+      <div class="hd">Activity</div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-top:11px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="dock" style="width:26px;height:26px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3ddc97" stroke-width="2"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Z"/></svg></div>
+          <div style="flex:1 1 auto"><div class="m" style="font-size:9.5px;color:#cfe9f5">Microphone live</div><div class="m" style="font-size:7.5px;color:#3d6d86">18:48:05</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="dock" style="width:26px;height:26px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#35d6ff" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5" stroke-linecap="round"/></svg></div>
+          <div style="flex:1 1 auto"><div class="m" style="font-size:9.5px;color:#cfe9f5">Found 2 precedents</div><div class="m" style="font-size:7.5px;color:#3d6d86">18:48:25</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="dock" style="width:26px;height:26px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff8c42" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/></svg></div>
+          <div style="flex:1 1 auto"><div class="m" style="font-size:9.5px;color:#cfe9f5">Rendered KickZone</div><div class="m" style="font-size:7.5px;color:#3d6d86">18:49:02</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="dock" style="width:26px;height:26px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff8c42" stroke-width="2"><path d="M20 7l-9 9-5-5" stroke-linecap="round"/></svg></div>
+          <div style="flex:1 1 auto"><div class="m" style="font-size:9.5px;color:#cfe9f5">24 new job matches</div><div class="m" style="font-size:7.5px;color:#3d6d86">18:49:40</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ transcript ribbon ============ -->
+  <div style="position:absolute;left:50%;transform:translateX(-50%);top:706px;width:620px;text-align:center">
+    <div class="m" style="font-size:8px;letter-spacing:.22em;color:#ff8c42">ZERO</div>
+    <div style="font-size:14px;color:#dff6ff;margin-top:4px">What is the Atlanta Braves score?</div>
+    <div style="font-size:13px;line-height:1.6;color:#8fbdd4;margin-top:11px">Braves took it 6&ndash;5 against the Dodgers at Truist Park. Final.</div>
+  </div>
+
+  <!-- ============ dock ============ -->
+  <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:26px;display:flex;gap:16px;align-items:flex-end">
+    <div style="text-align:center"><div class="dock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9e4" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8" stroke-linecap="round"/></svg></div><div class="m" style="font-size:7px;letter-spacing:.14em;color:#4a7a92;margin-top:6px">PROJECTS</div></div>
+    <div style="text-align:center"><div class="dock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9e4" stroke-width="1.6"><path d="M4 5h16v14H4z"/><path d="M4 9h16" /></svg></div><div class="m" style="font-size:7px;letter-spacing:.14em;color:#4a7a92;margin-top:6px">INBOX</div></div>
+    <div style="text-align:center"><div class="dock" style="width:54px;height:54px;border-color:rgba(53,214,255,.6);background:rgba(53,214,255,.14);box-shadow:0 0 26px -4px rgba(53,214,255,.6)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ff0ff" stroke-width="1.8"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Z"/><path d="M18.5 11.5a6.5 6.5 0 0 1-13 0M12 18v3" stroke-linecap="round"/></svg></div><div class="m" style="font-size:7px;letter-spacing:.14em;color:#7fe3ff;margin-top:6px">SPEAK</div></div>
+    <div style="text-align:center"><div class="dock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9e4" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2" stroke-linecap="round"/></svg></div><div class="m" style="font-size:7px;letter-spacing:.14em;color:#4a7a92;margin-top:6px">JOBS</div></div>
+    <div style="text-align:center"><div class="dock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7fc9e4" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke-linecap="round"/></svg></div><div class="m" style="font-size:7px;letter-spacing:.14em;color:#4a7a92;margin-top:6px">CONFIG</div></div>
+  </div>
+
+  <div class="m" style="position:absolute;left:26px;bottom:26px;font-size:8px;letter-spacing:.16em;color:#3d6d86">18:48:37 &nbsp;&middot;&nbsp; WED 26 AUG 2026</div>
+  <div class="m" style="position:absolute;right:26px;bottom:26px;font-size:8px;letter-spacing:.16em;color:#3d6d86">CORE GPT-OSS.120B &nbsp;&middot;&nbsp; LAT 9.7s</div>
+</div>
+</x-dc>
+</body>
+</html>

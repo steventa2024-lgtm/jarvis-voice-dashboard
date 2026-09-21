@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{name}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tailwind.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Only what the base cannot know about: this app's own list. */
+  .item { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-4); }
+  .item-title { flex: 1; min-width: 0; }
+  .item.is-done .item-title { text-decoration: line-through; color: var(--ink-3); }
+  .item-x { padding: var(--s-2) var(--s-4); font-size: var(--step--1); }
+  .item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+  #list { list-style: none; padding: 0; display: grid; gap: var(--s-3); }
+  #error:not([hidden]) {
+    color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent);
+    border-radius: var(--r); padding: var(--s-3) var(--s-4);
+  }
+  .mode { font-size: var(--step--1); color: var(--ink-3); }
+  body[data-mode="local"] .mode::before { content: '\25CF'; color: var(--warn); margin-right: .4em; }
+  body[data-mode="api"]   .mode::before { content: '\25CF'; color: var(--ok);   margin-right: .4em; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container between">
+    <strong>{name}</strong>
+    <span class="mode" id="mode">checking…</span>
+  </div>
+</header>
+
+<main class="section">
+  <div class="narrow stack-lg">
+
+    <div class="stack">
+      <p class="eyebrow">MVP</p>
+      <h1>{name}</h1>
+      <p class="lead">A front end, a JSON API and a database. Replace the item
+         list with whatever this is actually for.</p>
+    </div>
+
+    <form id="add" class="cluster" style="align-items:flex-end">
+      <div class="field" style="flex:1;min-width:min(260px,100%)">
+        <label for="title">Add an item</label>
+        <input id="title" type="text" placeholder="What needs doing?" required
+               autocomplete="off">
+      </div>
+      <button class="btn" type="submit">Add</button>
+    </form>
+
+    <p id="error" role="alert" hidden></p>
+
+    <ul id="list"></ul>
+    <p id="empty" class="muted" hidden>Nothing here yet. Add the first one above.</p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container between">
+    <span>&copy; <span id="year"></span> {name}</span>
+    <span class="muted">python server.py</span>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="base.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

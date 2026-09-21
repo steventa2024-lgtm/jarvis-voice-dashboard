@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+    
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="clock" id="clock">00:00:00</div>
+            <div class="date" id="date">Loading date...</div>
+        </div>
+
+        <!-- Orb and status -->
+        <div class="orb-container">
+            <div class="orb-ring"></div>
+            <div class="orb" id="orb"></div>
+            <div class="status-text" id="statusText">System Online</div>
+        </div>
+
+        <!-- Input area -->
+        <div class="input-area">
+            <button class="mic-btn" id="micBtn" title="Toggle listening">🎤</button>
+            <input type="text" class="text-input" id="textInput" placeholder="Type a command..." autofocus>
+            <button class="send-btn" id="sendBtn">SEND</button>
+        </div>
+
+        <!-- Widgets -->
+        <div class="widgets">
+            <div class="widget">
+                <div class="widget-title">Battery</div>
+                <div class="widget-value" id="batteryWidget">--</div>
+            </div>
+            <div class="widget">
+                <div class="widget-title">Network</div>
+                <div class="widget-value" id="networkWidget">--</div>
+            </div>
+            <div class="widget">
+                <div class="widget-title">Weather</div>
+                <div class="widget-value" id="weatherWidget">--</div>
+            </div>
+        </div>
+
+        <!-- Output log -->
+        <div class="output" id="outputLog">
+            <div class="log-entry system">J.A.R.V.I.S. initialized. Click the microphone to start voice commands.</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

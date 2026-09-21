@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home — {name}</title>
+<meta name="description" content="{name}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tailwind.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container between">
+    <strong><a href="index.html" style="color:inherit;text-decoration:none">{name}</a></strong>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="section container center stack stagger">
+    <p class="eyebrow">{name}</p>
+    <h1>A sentence that says what this is</h1>
+    <p class="lead">And a second that says who it is for. Specific beats safe.</p>
+    <div class="cluster" style="justify-content:center">
+      <a class="btn" href="work.html">See the work</a>
+      <a class="btn btn-ghost" href="contact.html">Get in touch</a>
+    </div>
+  </section>
+
+  <section class="section container stack-lg">
+    <h2>Selected work</h2>
+    <div class="grid">
+      <a class="card card-hover on-scroll stack" href="work.html" style="text-decoration:none;color:inherit">
+        <span class="tag">Case</span><h3>First project</h3>
+        <p class="muted">What it was and what changed because of it.</p>
+      </a>
+      <a class="card card-hover on-scroll stack" href="work.html" style="text-decoration:none;color:inherit">
+        <span class="tag">Case</span><h3>Second project</h3>
+        <p class="muted">One outcome, stated as a number if you have one.</p>
+      </a>
+      <a class="card card-hover on-scroll stack" href="work.html" style="text-decoration:none;color:inherit">
+        <span class="tag">Case</span><h3>Third project</h3>
+        <p class="muted">Keep the strongest one last.</p>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container between">
+    <span>&copy; <span id="year"></span> {name}</span>
+    <span class="muted">Built locally</span>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="base.js"></script>
+</body>
+</html>

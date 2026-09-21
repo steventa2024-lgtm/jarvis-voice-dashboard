@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Application form — local test fixture</title>
+<style>
+  body { font: 16px system-ui; max-width: 640px; margin: 2rem auto; }
+  label { display: block; margin: .9rem 0; }
+  span { display: block; font-weight: 600; margin-bottom: .25rem; }
+  input, textarea { width: 100%; padding: .5rem; }
+</style>
+</head>
+<body>
+<h1>Barista — application</h1>
+
+<!-- A stand-in for a real employer's form, so prepare() can be exercised
+     without sending anything to anybody. Field labels deliberately match the
+     shapes in FIELD_MAP, plus several it should leave alone. -->
+<form>
+  <label><span>First name</span><input name="fn"></label>
+  <label><span>Last name</span><input name="ln"></label>
+  <label><span>Email</span><input name="em" type="email"></label>
+  <label><span>Phone</span><input name="ph"></label>
+  <label><span>Location</span><input name="loc"></label>
+  <label><span>LinkedIn</span><input name="li"></label>
+
+  <!-- Must be left for a human: a screening question and a wage demand. -->
+  <label><span>Why do you want to work here?</span><textarea name="why"></textarea></label>
+  <label><span>Desired hourly rate</span><input name="rate"></label>
+  <label><span>Are you 18 or older?</span><input name="age"></label>
+
+  <button type="button">Save draft</button>
+  <button type="submit">Submit application</button>
+  <button type="button">Send</button>
+  <button type="button">Apply now</button>
+</form>
+</body>
+</html>

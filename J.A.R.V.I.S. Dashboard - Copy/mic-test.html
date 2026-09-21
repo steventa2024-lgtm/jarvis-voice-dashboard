@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microphone and recogniser test</title>
+<style>
+  :root { --bg:#0e1015; --panel:#161a22; --line:#262b36; --ink:#e8ebf2; --ink2:#9aa3b2;
+          --ok:#3ddc97; --bad:#ff5f56; --warn:#ffb454; --acc:#4fd1ff; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:15px/1.5 ui-monospace,Consolas,monospace;
+         padding:24px; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:20px; margin-bottom:4px; letter-spacing:.02em; }
+  .sub { color:var(--ink2); margin-bottom:20px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+           padding:16px; margin-bottom:16px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  button { background:var(--acc); color:#06202b; border:0; border-radius:6px;
+           padding:9px 16px; font:inherit; font-weight:700; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  button:disabled { opacity:.4; cursor:default; }
+  select { background:#0b0e13; color:var(--ink); border:1px solid var(--line);
+           border-radius:6px; padding:8px; font:inherit; max-width:100%; }
+  label { color:var(--ink2); }
+  .meter { height:14px; background:#0b0e13; border:1px solid var(--line);
+           border-radius:7px; overflow:hidden; margin-top:10px; }
+  .meter i { display:block; height:100%; width:0; background:var(--ok); transition:width .06s; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .stat b { display:block; font-size:22px; }
+  .stat span { color:var(--ink2); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+  #log { height:340px; overflow:auto; background:#0b0e13; border:1px solid var(--line);
+         border-radius:8px; padding:12px; font-size:13px; }
+  #log div { padding:1px 0; }
+  .t { color:var(--ink2); }
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)} .acc{color:var(--acc)}
+  .verdict { font-size:16px; line-height:1.6; }
+  code { background:#0b0e13; padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+
+<h1>Microphone and recogniser test</h1>
+<p class="sub">Isolates the speech recogniser from J.A.R.V.I.S. entirely. Nothing here shares
+   a line of code with the dashboard.</p>
+
+<div class="panel">
+  <div class="row">
+    <label for="dev">Meter input</label>
+    <select id="dev"><option value="">Default</option></select>
+    <label><input type="checkbox" id="useMeter" checked> also open getUserMedia</label>
+  </div>
+  <div class="meter"><i id="bar"></i></div>
+  <p class="sub" style="margin:8px 0 0">Unticking <em>getUserMedia</em> runs the recogniser alone.
+     If speech only works with it unticked, holding the microphone open is what starves it.</p>
+</div>
+
+<div class="panel">
+  <div class="row">
+    <button id="go">Start recogniser</button>
+    <button id="stop" class="ghost" disabled>Stop</button>
+    <button id="clear" class="ghost">Clear</button>
+  </div>
+  <div class="grid" style="margin-top:16px">
+    <div class="stat"><b id="nSess">0</b><span>sessions</span></div>
+    <div class="stat"><b id="nRes">0</b><span>results</span></div>
+    <div class="stat"><b id="nNo">0</b><span>no-speech</span></div>
+    <div class="stat"><b id="nErr">0</b><span>other errors</span></div>
+  </div>
+</div>
+
+<div class="panel"><p class="verdict" id="verdict">Press start, then talk for about fifteen seconds.</p></div>
+
+<div class="panel" style="padding:0;border:0"><div id="log"></div></div>
+
+<script>
+(function () {
+  'use strict';
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var logEl = document.getElementById('log');
+  var sess = 0, results = 0, noSpeech = 0, errs = 0;
+  var rec = null, want = false, stream = null, ctx = null, ana = null, raf = 0;
+  var startedAt = 0, peakSeen = 0;
+
+  function esc(s) {
+    return String(s).replace(/[<>&]/g, function (c) {
+      if (c === '<') return '&lt;';
+      if (c === '>') return '&gt;';
+      return '&amp;';
+    });
+  }
+  function log(msg, cls) {
+    var d = document.createElement('div');
+    var t = new Date().toTimeString().slice(0, 8);
+    d.innerHTML = '<span class="t">' + t + '</span>  <span class="' + (cls || '') + '">' +
+                  esc(msg) + '</span>';
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function num(id, v) { document.getElementById(id).textContent = v; }
+
+  if (!SR) { log('This browser has no SpeechRecognition at all.', 'bad'); }
+  log('secure context: ' + window.isSecureContext + '   .   origin: ' + location.origin, 'acc');
+
+  navigator.mediaDevices.enumerateDevices().then(function (all) {
+    var sel = document.getElementById('dev');
+    all.filter(function (d) { return d.kind === 'audioinput'; })
+       .forEach(function (d) {
+         var o = document.createElement('option');
+         o.value = d.deviceId;
+         o.textContent = d.label || ('input ' + d.deviceId.slice(0, 6));
+         sel.appendChild(o);
+       });
+  });
+
+  function openMeter() {
+    var id = document.getElementById('dev').value;
+    var want2 = id ? { deviceId: { exact: id } } : true;
+    return navigator.mediaDevices.getUserMedia({ audio: want2 }).then(function (s) {
+      stream = s;
+      var track = s.getAudioTracks()[0];
+      log('getUserMedia opened: ' + track.label, 'ok');
+      var cfg = track.getSettings ? track.getSettings() : {};
+      log('   sampleRate=' + (cfg.sampleRate || '?') + '  channels=' + (cfg.channelCount || '?'),
+          (cfg.sampleRate && cfg.sampleRate <= 16000) ? 'warn' : 'acc');
+      if (cfg.sampleRate && cfg.sampleRate <= 16000) {
+        log('   ^ narrowband, which means a Bluetooth hands-free link.', 'warn');
+      }
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+      ana = ctx.createAnalyser();
+      ana.fftSize = 512;
+      ctx.createMediaStreamSource(stream).connect(ana);
+      var buf = new Uint8Array(ana.fftSize);
+      (function draw() {
+        if (!ana) return;
+        ana.getByteTimeDomainData(buf);
+        var peak = 0;
+        for (var i = 0; i < buf.length; i++) {
+          var dv = Math.abs(buf[i] - 128);
+          if (dv > peak) peak = dv;
+        }
+        var lvl = peak / 128;
+        if (lvl > peakSeen) peakSeen = lvl;
+        document.getElementById('bar').style.width = Math.min(100, lvl * 220) + '%';
+        raf = requestAnimationFrame(draw);
+      })();
+    });
+  }
+
+  function closeMeter() {
+    cancelAnimationFrame(raf); raf = 0;
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    if (ctx) { ctx.close(); ctx = null; }
+    ana = null;
+    document.getElementById('bar').style.width = '0';
+  }
+
+  function build() {
+    var r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = navigator.language || 'en-US';
+
+    r.onstart = function () {
+      sess++; num('nSess', sess);
+      log('session ' + sess + ' started', 'acc');
+    };
+    r.onresult = function (e) {
+      var txt = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      if (!txt.replace(/\s/g, '')) return;
+      results++; num('nRes', results);
+      log('HEARD: "' + txt + '"', 'ok');
+      verdict();
+    };
+    r.onerror = function (e) {
+      if (e.error === 'no-speech') { noSpeech++; num('nNo', noSpeech); log('no-speech', 'warn'); }
+      else { errs++; num('nErr', errs); log('ERROR: ' + e.error, 'bad'); }
+      verdict();
+    };
+    r.onend = function () {
+      log('session ended', 't');
+      /* Deliberately far slower than the dashboard restarts, so this test can
+         never itself become the thing that provokes a throttle. */
+      if (want) setTimeout(function () { try { r.start(); } catch (x) {} }, 1200);
+    };
+    return r;
+  }
+
+  function verdict() {
+    var el = document.getElementById('verdict');
+    var secs = (Date.now() - startedAt) / 1000;
+
+    if (results > 0) {
+      el.innerHTML = '<span class="ok">The recogniser works.</span> It transcribed ' + results +
+        ' time(s) on this input. If the dashboard still hears nothing with the same microphone, ' +
+        'the fault is in J.A.R.V.I.S. and not in the browser or the hardware.';
+      return;
+    }
+    if (secs < 12) return;
+
+    if (peakSeen < 0.05) {
+      el.innerHTML = '<span class="bad">No audio is reaching the page at all</span> (peak ' +
+        peakSeen.toFixed(3) + '). The meter never moved, so this is the microphone or the input ' +
+        'selection, not the recogniser.';
+    } else if (errs > 0) {
+      el.innerHTML = '<span class="bad">The recogniser is erroring.</span> Read the log above. ' +
+        'A <code>network</code> error means the cloud speech service is unreachable or refusing.';
+    } else {
+      el.innerHTML = '<span class="bad">Sound is arriving but nothing transcribes.</span> Peak ' +
+        peakSeen.toFixed(2) + ', ' + sess + ' session(s), ' + noSpeech + ' no-speech, zero results. ' +
+        'The speech backend is returning empty. Either the link is narrowband Bluetooth, or this ' +
+        'origin has been throttled. Retry with a USB microphone set as the Windows default input.';
+    }
+  }
+
+  document.getElementById('go').onclick = function () {
+    var btn = this;
+    peakSeen = 0; startedAt = Date.now(); want = true;
+    var pre = document.getElementById('useMeter').checked
+      ? openMeter()
+      : Promise.resolve(log('running the recogniser alone, getUserMedia not opened', 'acc'));
+
+    pre.then(function () {
+      rec = build();
+      rec.start();
+      btn.disabled = true;
+      document.getElementById('stop').disabled = false;
+      document.getElementById('verdict').textContent =
+        'Listening. Talk now, for about fifteen seconds.';
+    }).catch(function (e) {
+      want = false;
+      log('could not start: ' + e.name + ' - ' + e.message, 'bad');
+    });
+  };
+
+  document.getElementById('stop').onclick = function () {
+    want = false;
+    try { if (rec) rec.stop(); } catch (e) {}
+    closeMeter();
+    this.disabled = true;
+    document.getElementById('go').disabled = false;
+    log('stopped', 't');
+    verdict();
+  };
+
+  document.getElementById('clear').onclick = function () {
+    logEl.innerHTML = '';
+    sess = results = noSpeech = errs = 0;
+    num('nSess', 0); num('nRes', 0); num('nNo', 0); num('nErr', 0);
+  };
+})();
+</script>
+</body>
+</html>

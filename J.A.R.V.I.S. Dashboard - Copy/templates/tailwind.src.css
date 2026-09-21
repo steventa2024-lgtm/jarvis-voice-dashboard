@@ -1,0 +1,151 @@
+/* Utilities only — no preflight.
+
+   The foundation already has a reset that is better than a generic one: it
+   carries focus-visible, overflow-wrap on headings, and the min-width:0 flex
+   fix that stops a nav pushing a page wider than the screen. Tailwind's
+   preflight would overwrite all of it. */
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+
+/* Colour comes from the foundation's tokens rather than Tailwind's palette.
+
+   Two reasons. Tailwind's 22 families times 11 shades times every colour
+   utility is where the file size actually goes — and more importantly, the
+   whole point of the token system is that setting --accent retints the entire
+   page. A hardcoded bg-blue-500 breaks that, and "--accent was never changed
+   from the default blue, on a coffee site" is already a documented fault. */
+@theme {
+  --color-accent:      var(--accent);
+  --color-accent-ink:  var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-bg:      var(--bg);
+  --color-surface: var(--surface);
+  --color-raised:  var(--raised);
+  --color-line:    var(--line);
+  --color-ink:     var(--ink);
+  --color-ink-2:   var(--ink-2);
+  --color-ink-3:   var(--ink-3);
+  --color-ok:      var(--ok);
+  --color-warn:    var(--warn);
+  --color-bad:     var(--bad);
+}
+
+/* Spacing and radius follow the foundation's scale too, so a Tailwind class
+   and a foundation class put things on the same grid instead of half a step
+   apart. */
+@theme {
+  --spacing: 0.25rem;
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r);
+  --radius-lg: var(--r-lg);
+  --radius-full: var(--r-full);
+}
+
+/* ---------------------------------------------------------------------------
+   The vocabulary.
+
+   Nothing scans markup here — this file IS the content source. Everything
+   listed below is generated; anything not listed does not exist. That is the
+   trade for having no build step, and it is why the deterministic class check
+   matters: a miss has to be reported by name rather than silently falling
+   through to browser defaults.
+   --------------------------------------------------------------------------- */
+
+/* layout and position */
+@source inline("{sm:,md:,lg:,}{block,inline-block,inline,flex,inline-flex,grid,inline-grid,hidden,contents}");
+@source inline("{relative,absolute,fixed,sticky,static}");
+@source inline("{inset-0,inset-x-0,inset-y-0,top-0,right-0,bottom-0,left-0,top-full}");
+@source inline("z-{0,10,20,30,40,50}");
+@source inline("{overflow,overflow-x,overflow-y}-{auto,hidden,visible,scroll}");
+@source inline("isolate");
+
+/* grid */
+@source inline("{sm:,md:,lg:,}grid-cols-{1,2,3,4,5,6,12}");
+@source inline("{sm:,md:,lg:,}col-span-{1,2,3,4,5,6,full}");
+@source inline("{sm:,md:,lg:,}row-span-{1,2,3,full}");
+@source inline("grid-flow-{row,col,dense}");
+@source inline("place-{items,content}-{start,center,end,between,stretch}");
+@source inline("auto-{rows,cols}-{auto,min,max,fr}");
+
+/* flex */
+@source inline("{sm:,md:,lg:,}flex-{row,row-reverse,col,col-reverse,wrap,nowrap,wrap-reverse,1,auto,initial,none}");
+@source inline("{items,self}-{start,center,end,baseline,stretch}");
+@source inline("justify-{start,center,end,between,around,evenly}");
+@source inline("{shrink,grow}-{0,}");
+@source inline("order-{1,2,3,first,last,none}");
+
+/* spacing — the foundation's scale, expressed on Tailwind's grid */
+@source inline("{sm:,md:,lg:,}{p,px,py,pt,pr,pb,pl}-{0,1,2,3,4,5,6,8,10,12,16,20,24,32}");
+@source inline("{sm:,md:,lg:,}{m,mx,my,mt,mr,mb,ml}-{0,1,2,3,4,5,6,8,10,12,16,20,24,auto}");
+@source inline("-{mt,mb,ml,mr}-{1,2,4,8}");
+@source inline("{sm:,md:,lg:,}gap-{0,1,2,3,4,5,6,8,10,12,16}");
+@source inline("gap-{x,y}-{0,1,2,3,4,6,8,12}");
+@source inline("space-{y,x}-{1,2,3,4,6,8}");
+
+/* sizing */
+@source inline("{sm:,md:,lg:,}w-{auto,full,screen,fit,min,max,px,1/2,1/3,2/3,1/4,3/4}");
+@source inline("h-{auto,full,screen,fit,px}");
+@source inline("{w,h}-{4,5,6,8,10,12,16,20,24,32,40,48,64}");
+@source inline("{min-h,min-w}-{0,full,screen,fit}");
+@source inline("{sm:,md:,lg:,}max-w-{none,xs,sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,full,prose,screen-sm,screen-md,screen-lg,screen-xl}");
+@source inline("max-h-{full,screen,none}");
+@source inline("aspect-{square,video,auto}");
+@source inline("size-{4,6,8,10,12,16,full}");
+
+/* type */
+@source inline("{sm:,md:,lg:,}text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl}");
+@source inline("font-{thin,light,normal,medium,semibold,bold,extrabold,black}");
+@source inline("font-{sans,serif,mono}");
+@source inline("leading-{none,tight,snug,normal,relaxed,loose,3,4,5,6,7,8}");
+@source inline("tracking-{tighter,tight,normal,wide,wider,widest}");
+@source inline("{sm:,md:,lg:,}text-{left,center,right,justify}");
+@source inline("{uppercase,lowercase,capitalize,normal-case,italic,not-italic}");
+@source inline("{underline,no-underline,line-through,truncate,text-balance,text-pretty,text-nowrap,break-words,whitespace-nowrap}");
+@source inline("line-clamp-{1,2,3,4,none}");
+@source inline("align-{top,middle,bottom,baseline}");
+@source inline("{list-none,list-disc,list-inside,list-outside}");
+@source inline("underline-offset-{2,4,8}");
+@source inline("indent-0");
+
+/* colour — token-backed only, plus the literals that always make sense */
+@source inline("{hover:,focus:,dark:,}{text,bg,border,fill,stroke,decoration}-{accent,accent-ink,accent-soft,bg,surface,raised,line,ink,ink-2,ink-3,ok,warn,bad}");
+@source inline("{text,bg,border}-{white,black,transparent,current,inherit}");
+@source inline("bg-{none,gradient-to-r,gradient-to-b,gradient-to-br,gradient-to-tr}");
+@source inline("{from,via,to}-{accent,accent-soft,surface,transparent}");
+@source inline("bg-{cover,contain,center,no-repeat}");
+@source inline("{bg,text,border}-opacity-{0,10,20,50,75,100}");
+
+/* borders, radius, shadow */
+@source inline("rounded-{none,sm,md,lg,xl,2xl,3xl,full}");
+@source inline("rounded-{t,r,b,l,tl,tr,br,bl}-{sm,md,lg,xl,2xl,full}");
+@source inline("{border,border-x,border-y,border-t,border-r,border-b,border-l}-{0,2,4,8,}");
+@source inline("{border-solid,border-dashed,border-dotted,border-none}");
+@source inline("{hover:,}shadow-{none,sm,md,lg,xl,2xl,inner}");
+@source inline("ring-{0,1,2,4}");
+@source inline("ring-{accent,line,transparent}");
+@source inline("divide-{y,x}");
+@source inline("outline-none");
+
+/* effects and motion */
+@source inline("{hover:,focus:,}opacity-{0,5,10,20,25,40,50,60,75,80,90,100}");
+@source inline("transition{-all,-colors,-opacity,-shadow,-transform,}");
+@source inline("duration-{75,100,150,200,300,500,700,1000}");
+@source inline("ease-{linear,in,out,in-out}");
+@source inline("delay-{75,100,150,200,300}");
+@source inline("{hover:,focus:,}{scale,scale-x,scale-y}-{90,95,100,105,110}");
+@source inline("{hover:,}{translate-x,translate-y}-{0,1,2,4,8}");
+@source inline("{hover:,}-translate-y-{1,2,4}");
+@source inline("{hover:,}rotate-{0,1,2,3,6,12,45,90,180}");
+@source inline("{animate-none,animate-spin,animate-pulse,animate-bounce}");
+@source inline("backdrop-blur{-sm,-md,-lg,}");
+@source inline("blur{-sm,-md,-lg,}");
+@source inline("{object-cover,object-contain,object-center,object-top}");
+
+/* interaction */
+@source inline("{cursor-pointer,cursor-default,cursor-not-allowed,select-none,pointer-events-none,pointer-events-auto}");
+@source inline("{appearance-none,resize-none,resize-y}");
+@source inline("{sr-only,not-sr-only}");
+@source inline("{focus:,focus-visible:,}{outline-none,ring-2}");
+@source inline("{group,peer}");
+@source inline("group-hover:{opacity-100,scale-105,text-accent,translate-x-1}");
+@source inline("{motion-safe:,motion-reduce:}{transition-none,transform-none}");

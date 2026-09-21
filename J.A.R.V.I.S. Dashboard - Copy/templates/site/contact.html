@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — {name}</title>
+<meta name="description" content="Get in touch">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tailwind.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container between">
+    <strong><a href="index.html" style="color:inherit;text-decoration:none">{name}</a></strong>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="work.html">Work</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="section narrow stack">
+    <p class="eyebrow">Contact</p>
+    <h1>Get in touch</h1>
+    <p class="muted">Point this at a real endpoint before you ship it.</p>
+    <form class="stack" onsubmit="return false">
+      <div class="field"><label for="name">Name</label><input id="name" type="text" required></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" required></div>
+      <div class="field"><label for="msg">Message</label><textarea id="msg" rows="5"></textarea></div>
+      <button class="btn" type="submit">Send</button>
+    </form>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container between">
+    <span>&copy; <span id="year"></span> {name}</span>
+    <span class="muted">Built locally</span>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="base.js"></script>
+</body>
+</html>
