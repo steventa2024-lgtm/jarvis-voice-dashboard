@@ -36,7 +36,9 @@ STATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jarvis_video.j
 VOICE = os.path.join(os.path.expanduser('~'), 'OpenMontage', 'voices',
                      'en_US-lessac-medium.onnx')
 
-PIXABAY_KEY = os.environ.get('PIXABAY_API_KEY', '')
+PIXABAY_KEY = os.environ.get('PIXABAY_API_KEY', '').strip()
+PIXABAY_CONFIG_ERROR = ('Set PIXABAY_API_KEY in the server environment and restart '
+                        'J.A.R.V.I.S. to enable Pixabay video footage.')
 
 TARGET_W, TARGET_H, FPS = 1920, 1080, 30
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
@@ -105,6 +107,8 @@ def _rank(query, hits):
 
 
 def _stock(query, out_path):
+    if not PIXABAY_KEY:
+        raise RuntimeError(PIXABAY_CONFIG_ERROR)
     url = 'https://pixabay.com/api/videos/?' + urllib.parse.urlencode(
         {'key': PIXABAY_KEY, 'q': query, 'per_page': 20, 'safesearch': 'true'})
     data = json.load(urllib.request.urlopen(url, timeout=30))
@@ -156,6 +160,8 @@ _SAY_KEYS = ('say', 'line', 'text', 'narration', 'voiceover', 'script')
 
 def render(title, beats, tags=None, description=None):
     """beats: [{'query': 'coffee beans', 'say': 'Every cup starts...'}, ...]"""
+    if not PIXABAY_KEY:
+        return {'ok': False, 'error': PIXABAY_CONFIG_ERROR}
     if not os.path.isfile(VOICE):
         return {'ok': False, 'error':
                 'No Piper voice at %s. Download en_US-lessac-medium.onnx from '
