@@ -1,0 +1,30 @@
+# Private credentials and local environment configuration
+.env
+.env.*
+!.env.example
+google_auth.json
+spotify_auth.json
+*.pem
+*.key
+# Private/generated application runtime files
+jarvis_jobs.json
+jarvis_lessons.json
+jarvis_minecraft.json
+jarvis_state.json
+jarvis_video.json
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+# Python and development caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+# Private recovery material must never enter this repository
+*.bundle
+JarvisPrivateRecovery/
+UNSANITIZED-PRIVATE-*
