@@ -1957,3 +1957,12 @@ body:not(.booting) .rail .panel, body:not(.booting) .topbar { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .watch li.tm.is-live > b::after { animation: none; }
 }
+
+/* Mission card: confined to the existing transcript column. */
+.mission-card { box-sizing: border-box; min-width: 0; max-width: 100%; overflow-wrap: anywhere; border-left: 2px solid currentColor; padding-left: 10px; }
+.mission-card strong { font-size: 12px; }
+.mission-state, .mission-note { font-size: 10px; line-height: 1.5; margin-top: 5px; }
+.mission-steps { list-style: none; padding: 0; margin: 7px 0; max-height: 180px; overflow-y: auto; }
+.mission-steps li { font-size: 11px; line-height: 1.6; }
+.mission-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mission-controls button { font: inherit; font-size: 10px; color: inherit; background: transparent; border: 1px solid currentColor; padding: 4px 7px; cursor: pointer; }

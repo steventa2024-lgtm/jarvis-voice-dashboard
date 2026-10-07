@@ -469,7 +469,9 @@
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    return await res.json();
+    const result = await res.json();
+    if (J.agent) J.agent.observeFiles(payload, result);
+    return result;
   }
 
   async function filesCmd(payload) {
@@ -2688,7 +2690,8 @@
     }));
   }
 
-  async function streamOpenAI(messages, signal, depth) {
+  async function streamOpenAI(messages, signal, depth, control) {
+    const emit = (name, value) => { if (!control) J.emit(name, value); };
     depth = depth || 0;
     const base = altBase();
     if (!base) throw new Error('No base URL set for the OpenAI-compatible provider.');
@@ -2701,6 +2704,11 @@
       max_tokens: 4000,
       stream: true
     };
+
+    if (control) {
+      body.messages[0] = { role: 'system', content: control };
+      delete body.tools; body.max_tokens = 2200;
+    }
 
     const route = openAIRequest('/chat/completions');
     const res = await fetch(route.url, {
@@ -2723,7 +2731,7 @@
       if (why === 'provider error' && depth === 0) {
         J.log('Provider returned ' + res.status + ' — retrying once', 'warn', 'net');
         await new Promise(r => setTimeout(r, 1200));
-        return streamOpenAI(messages, signal, depth + 1);
+        return streamOpenAI(messages, signal, depth + 1, control);
       }
 
       if (why && depth < 3) {
@@ -2731,8 +2739,8 @@
         const next = candidates()[0];
         if (next) {
           adopt(next);
-          J.emit('text', '');
-          return streamOpenAI(messages, signal, depth + 1);
+          emit('text', '');
+          return streamOpenAI(messages, signal, depth + 1, control);
         }
         const err0 = new Error(
           'Every configured provider is ' + why + '. Add another connection in '
@@ -2771,18 +2779,18 @@
            narrating its own deliberation. Split it out and send it to the same
            trace channel everything else uses. */
         const parts = splitThinking(d.content);
-        if (parts.thought && J.settings.showThinking) J.emit('thinking', parts.thought);
+        if (parts.thought && J.settings.showThinking) emit('thinking', parts.thought);
         if (parts.visible) {
           text += parts.visible;
-          lastReplyText += parts.visible;
-          J.emit('text', parts.visible);
+          if (!control) lastReplyText += parts.visible;
+          emit('text', parts.visible);
         }
       }
 
       /* Reasoning models on OpenRouter and DeepSeek stream their scratchpad on
          a separate field; route it to the same channel as Anthropic thinking. */
       const think = d.reasoning || d.reasoning_content;
-      if (think && J.settings.showThinking) J.emit('thinking', think);
+      if (think && J.settings.showThinking) emit('thinking', think);
 
       if (d.tool_calls) {
         for (const tc of d.tool_calls) {
@@ -2793,7 +2801,7 @@
           if (tc.function && tc.function.arguments) calls[i].args += tc.function.arguments;
           if (calls[i].name && !calls[i]._announced) {
             calls[i]._announced = true;
-            J.emit('tool-start', { name: calls[i].name, server: false });
+            emit('tool-start', { name: calls[i].name, server: false });
           }
         }
       }
@@ -2878,13 +2886,13 @@
     };
   }
 
-  async function callModel(messages) {
-    if (!turnModel) return streamOnce(messages, controller.signal);
+  async function callModel(messages, control) {
+    if (!turnModel) return streamOnce(messages, controller.signal, control);
 
     const failed = turnModel;
     const guard = routeSignal(controller.signal);
     try {
-      return await streamOnce(messages, guard.signal);
+      return await streamOnce(messages, guard.signal, control);
     } catch (err) {
       // The user stopped the turn. That is not a routing failure.
       if (controller.signal.aborted) throw err;
@@ -2903,7 +2911,7 @@
       turnModel = null;
       activeRoute = null;
       J.emit('routed', { model: J.settings.altModel, why: 'fallback' });
-      return streamOnce(messages, controller.signal);
+      return streamOnce(messages, controller.signal, control);
     } finally {
       guard.release();
     }
@@ -2957,11 +2965,17 @@
     return { visible: visible, thought: thought };
   }
 
-  async function streamOnce(messages, signal) {
+  async function streamOnce(messages, signal, control) {
+    const emit = (name, value) => { if (!control) J.emit(name, value); };
     resetThinking();
-    if (usingOpenAI()) return streamOpenAI(messages, signal);
+    if (usingOpenAI()) return streamOpenAI(messages, signal, 0, control);
 
     const body = requestFor(messages);
+    if (control) {
+      body.system = [{ type: 'text', text: control }];
+      delete body.tools; delete body.thinking; delete body.output_config;
+      body.max_tokens = 2200;
+    }
     const url  = transport === 'proxy' ? PROXY : API;
 
     const res = await fetch(url, {
@@ -2996,10 +3010,10 @@
           if (b.type === 'tool_use' || b.type === 'server_tool_use' || b.type === 'mcp_tool_use') b._json = '';
           blocks[ev.index] = b;
 
-          if (b.type === 'server_tool_use') J.emit('tool-start', { name: b.name, server: true });
-          if (b.type === 'tool_use')        J.emit('tool-start', { name: b.name, server: false });
+          if (b.type === 'server_tool_use') emit('tool-start', { name: b.name, server: true });
+          if (b.type === 'tool_use')        emit('tool-start', { name: b.name, server: false });
           if (b.type === 'web_search_tool_result' || b.type === 'web_fetch_tool_result') {
-            J.emit('tool-result', b);
+            emit('tool-result', b);
           }
           break;
         }
@@ -3008,8 +3022,8 @@
           const b = blocks[ev.index];
           if (!b) break;
           const d = ev.delta;
-          if (d.type === 'text_delta')      { b.text = (b.text || '') + d.text; J.emit('text', d.text); }
-          else if (d.type === 'thinking_delta')  { b.thinking = (b.thinking || '') + d.thinking; J.emit('thinking', d.thinking); }
+          if (d.type === 'text_delta')      { b.text = (b.text || '') + d.text; emit('text', d.text); }
+          else if (d.type === 'thinking_delta')  { b.thinking = (b.thinking || '') + d.thinking; emit('thinking', d.thinking); }
           else if (d.type === 'signature_delta') { b.signature = (b.signature || '') + d.signature; }
           else if (d.type === 'input_json_delta'){ b._json += d.partial_json; }
           else if (d.type === 'citations_delta') { (b.citations = b.citations || []).push(d.citation); }
@@ -3241,6 +3255,15 @@
   let queued = null;
 
   async function send(text) {
+    const intent = J.agent && J.agent.intent(text);
+    if (intent === 'silence') { J.voice.shutUp(); return; }
+    if (intent === 'cancel' && J.agent.isActive()) { abort(); return; }
+    if (busy && intent === 'correction' && J.agent && J.agent.isActive()) {
+      J.agent.correct(text); queued = text;
+      if (controller) controller.abort();
+      for (const settle of Array.from(awaitingReview.values())) settle('aborted');
+      return;
+    }
     if (busy) {
       queued = text;
       J.log('Queued while busy: ' + String(text).slice(0, 60), 'info', 'sys');
@@ -3312,25 +3335,38 @@
 
     /* The shape of this run, kept so it can be learned from afterwards. */
     const episode = { actions: [], counts: {}, failed: false };
+    let missionTurn = false;
+    const missionControl = async (rules, input) => {
+      const answer = await callModel([{ role: 'user', content: input }], rules);
+      if (controller.signal.aborted) throw new DOMException('Stopped', 'AbortError');
+      if (answer.content.some(b => b.type === 'tool_use' || b.type === 'server_tool_use')) throw new Error('Structured planning cannot execute tools.');
+      return answer.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+    };
     let mergeNextReply = false;    // fold the post-check reply into the last one
 
     try {
+      if (J.agent) {
+        missionTurn = await J.agent.prepare(text, missionControl, toolList().filter(t => t.name).map(t => t.name + ': ' + String(t.description || '').slice(0, 180)), !(turnModel && activeRoute && activeRoute.tools === false));
+      }
       for (;;) {
+        if (controller.signal.aborted) throw new DOMException('Stopped', 'AbortError');
+        if (missionTurn && !J.agent.executing()) break;
         if (hops++ > MAX_TOOL_HOPS) {
+          if (missionTurn) J.agent.block('Existing tool-hop limit reached; remaining steps are unverified.');
           J.emit('turn-error', 'Tool loop exceeded its limit and was stopped.');
           break;
         }
 
         let msg;
         try {
-          msg = await callModel(messages);
+          msg = await callModel(missionTurn ? messages.concat([{ role: 'user', content: J.agent.context() }]) : messages);
         } catch (err) {
           // The refusal-fallback beta may not be enabled on this account; the
           // request is still perfectly valid without it, so retry once clean.
           if (useFallbacks && err.status === 400 && /fallback|beta/i.test(err.body || '')) {
             useFallbacks = false;
             J.log('Refusal fallbacks unavailable on this account — continuing without', 'warn', 'net');
-            msg = await callModel(messages);
+            msg = await callModel(missionTurn ? messages.concat([{ role: 'user', content: J.agent.context() }]) : messages);
           } else throw err;
         }
 
@@ -3384,12 +3420,20 @@
           const LANES = 3;
           const results = new Array(calls.length);
 
-          for (let start = 0; start < calls.length; start += LANES) {
-            const batch = calls.slice(start, start + LANES);
+          const batches = missionTurn ? J.agent.batches(calls, LANES) : Array.from({ length: Math.ceil(calls.length / LANES) }, (_, i) => calls.slice(i * LANES, (i + 1) * LANES));
+          for (const batch of batches) {
+            if (missionTurn && controller.signal.aborted) break;
             await Promise.all(batch.map(async (call, k) => {
+              if (missionTurn && (controller.signal.aborted || !J.agent.beforeTool(call))) {
+                results[calls.indexOf(call)] = { type: 'tool_result', tool_use_id: call.id, content: 'FAILED - mission dispatch stopped; no action attempted.' };
+                return;
+              }
               J.log('Tool: ' + call.name + ' ' + JSON.stringify(call.input).slice(0, 90), 'acc', 'sys');
               J.emit('tool-start', { name: call.name, input: call.input || {} });
-              const out = await execClientTool(call.name, call.input || {});
+              const out = missionTurn && (controller.signal.aborted || !J.agent.executing())
+                ? 'FAILED - mission stopped before dispatch; no action attempted.'
+                : await execClientTool(call.name, call.input || {});
+              if (missionTurn) J.agent.recordToolResult(call, out);
 
               const step = call.name
                 + ((call.input && call.input.action) ? ':' + call.input.action : '');
@@ -3439,13 +3483,17 @@
                 name: call.name,
                 failed: /^FAILED/.test(String(out))
               });
-              results[start + k] = {
+              results[calls.indexOf(call)] = {
                 type: 'tool_result', tool_use_id: call.id, content: String(out)
               };
             }));
           }
+          for (let i = 0; i < calls.length; i++) {
+            if (!results[i]) results[i] = { type: 'tool_result', tool_use_id: calls[i].id, content: 'FAILED - stopped before dispatch; no action attempted.' };
+          }
           messages.push({ role: 'user', content: results });
           history.push({ role: 'user', content: results });
+          if (missionTurn && J.agent.executing() && !controller.signal.aborted) await J.agent.review(missionControl, false);
           continue;
         }
 
@@ -3475,12 +3523,26 @@
             continue;
           }
         }
+        if (missionTurn && J.agent.executing()) await J.agent.review(missionControl, true);
         break;
       }
     } catch (err) {
+      if (missionTurn && err.name !== 'AbortError') J.agent.block('Execution or verification failed; remaining steps have no verified outcome.');
       if (err.name === 'AbortError') J.log('Request aborted by user', 'warn', 'net');
       else J.emit('turn-error', explain(err));
     } finally {
+      if (missionTurn && J.agent) {
+        const receipt = J.agent.finish();
+        if (receipt) {
+          const text = '\n\nMISSION ' + receipt.status.toUpperCase().replace(/_/g, ' ') + ' · ' + receipt.title
+            + '\nCompleted: ' + receipt.completed + '/' + receipt.total
+            + (receipt.changed.length ? '\nChanged: ' + receipt.changed.join(', ') : '')
+            + (receipt.verified.length ? '\nVerified: ' + receipt.verified.map(s => s.summary).join('; ') : '')
+            + (receipt.outcome ? '\n' + receipt.outcome : '');
+          J.emit('text', text);
+          history.push({ role: 'assistant', content: [{ type: 'text', text }] });
+        }
+      }
       const stillAbortable = controller;
       busy = false;
       controller = null;
@@ -3518,9 +3580,10 @@
       /* Log how this went, now that it has an outcome. Before the outcome an
          episode is just a list of things attempted, which teaches nothing. */
       if (lastUserText && episode.actions.length) {
+        const missionReceipt = missionTurn && J.agent.receipt();
         recordEpisode(lastUserText, episode.actions,
-                      episodeOutcome(episode),
-                      (lastReplyText || '').slice(0, 400));
+                      missionReceipt && missionReceipt.status !== 'completed' ? 'failed' : episodeOutcome(episode),
+                      missionReceipt ? ('Mission ' + missionReceipt.status + ': ' + missionReceipt.completed + '/' + missionReceipt.total + '. ' + (missionReceipt.outcome || '')).slice(0, 400) : (lastReplyText || '').slice(0, 400));
       }
 
       /* Anything trimmed off the front this turn becomes part of the brief.
@@ -3763,6 +3826,7 @@
   /* ============================================================ controls */
 
   function abort() {
+    if (J.agent && J.agent.isActive()) { J.agent.cancel(); queued = null; }
     if (controller) { controller.abort(); J.toast('Stopped.', 'warn', 2000); }
     /* An unanswered diff would otherwise hold the tool loop open for three
        minutes after the user has already told it to stop. */

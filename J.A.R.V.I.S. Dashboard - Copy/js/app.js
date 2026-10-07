@@ -16,6 +16,47 @@
   const convo = J.$('#convo');
   const input = J.$('#input');
 
+  /* Mission progress is event-driven and confined to the transcript. */
+  let missionCard = null;
+  function renderMission(m) {
+    if (!m) return;
+    if (!missionCard || !missionCard.isConnected || missionCard.dataset.mission !== m.id) {
+      missionCard = bubble('mission', 'MISSION');
+      missionCard.classList.add('mission-card');
+      missionCard.dataset.mission = m.id;
+    }
+    missionCard.replaceChildren();
+    const heading = document.createElement('strong');
+    heading.textContent = m.title;
+    const state = document.createElement('div');
+    state.className = 'mission-state'; state.setAttribute('role', 'status'); state.setAttribute('aria-live', 'polite');
+    const done = m.steps.filter(s => s.status === 'completed').length;
+    state.textContent = m.status.toUpperCase().replace(/_/g, ' ') + ' · ' + done + '/' + m.steps.length;
+    const list = document.createElement('ol');
+    list.className = 'mission-steps';
+    const symbols = { completed: '✓', running: '●', verifying: '◉', failed: '!', blocked: '!', skipped: '–', pending: '○' };
+    for (const s of m.steps) {
+      const li = document.createElement('li');
+      li.textContent = (symbols[s.status] || '○') + ' ' + s.title + ' — ' + s.status;
+      if (s.resultSummary) li.title = s.resultSummary;
+      list.appendChild(li);
+    }
+    missionCard.append(heading, state, list);
+    if (m.outcome) { const note = document.createElement('div'); note.className = 'mission-note'; note.textContent = m.outcome; missionCard.appendChild(note); }
+    if (!['completed', 'failed', 'cancelled'].includes(m.status)) {
+      const controls = document.createElement('div'); controls.className = 'mission-controls';
+      if (['waiting', 'blocked'].includes(m.status) && m.steps.length) {
+        const resume = document.createElement('button'); resume.type = 'button'; resume.textContent = 'Continue mission';
+        resume.addEventListener('click', () => J.brain.send('continue mission')); controls.appendChild(resume);
+      }
+      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel mission';
+      cancel.addEventListener('click', () => J.brain.abort()); controls.appendChild(cancel); missionCard.appendChild(controls);
+    }
+    stickToBottom(false);
+  }
+  J.on('mission:update', renderMission);
+  J.on('conversation-cleared', () => { if (missionCard) missionCard.closest('.msg').remove(); missionCard = null; });
+
   /* ============================================================ transcript */
 
   let live = null;        // the assistant bubble currently streaming
@@ -2535,6 +2576,7 @@
                 : (usingOpenAIName() || transport));
 
     const restored = restore();
+    if (J.agent) renderMission(J.agent.current());
     renderMemories();
     await step(4, restored ? restored + ' messages' : 'clean session');
 
