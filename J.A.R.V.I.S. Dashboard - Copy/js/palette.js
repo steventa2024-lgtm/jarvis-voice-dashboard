@@ -30,6 +30,7 @@
     const onOff = v => (v ? 'on' : 'off');
 
     return [
+      { ico: '◷', name: 'Scheduled tasks', hint: 'automations, schedules and run history', run: () => { if (J.tasks) J.tasks.show(); } },
       { ico: '◉', name: 'Toggle voice input',
         hint: J.voice.isListening() ? 'currently listening' : 'engage the microphone',
         key: 'space', run: () => J.voice.toggle() },

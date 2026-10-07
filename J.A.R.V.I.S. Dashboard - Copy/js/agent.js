@@ -7,6 +7,7 @@
   const STEP_STATUSES = ['pending', 'running', 'verifying', 'completed', 'failed', 'blocked', 'skipped'];
   const MAX_EVIDENCE = 60, MAX_REVISIONS = 6, MAX_RETRIES = 2;
   let mission = null;
+  let durableRun = null;
   const approvals = new Set();
   const calls = new Map();
   const copy = v => JSON.parse(JSON.stringify(v));
@@ -72,6 +73,7 @@
   function currentStep() { return mission && mission.steps[mission.currentStep]; }
   function publish(event) {
     if (!mission) return;
+    if (durableRun) mission.durable = copy(durableRun);
     mission.updatedAt = Date.now();
     J.save('mission', mission);
     J.emit('mission:update', copy(mission));
@@ -132,6 +134,7 @@
   }
   function beforeTool(call) {
     if (!executing() || mission.status === 'waiting_approval') return false;
+    if (J.tasks && !J.tasks.allowTool(call)) { block('Scheduled action requires interactive execution or an explicitly reviewed write policy.'); return false; }
     const s = currentStep(), sig = fingerprint({ name: call.name, input: call.input || {} });
     const repeated = mission.failures.some(f => f.signature === sig && !mission.evidence.some(e => e.kind === 'change' && e.success && e.project === f.project && e.sequence > f.sequence));
     if (repeated) { block('Identical failed tool call refused; revise the action or the plan.'); return false; }
@@ -261,7 +264,7 @@
       } else run();
       return true;
     }
-    if (!needsMission(text)) return false;
+    if (!durableRun && !needsMission(text)) return false;
     if (isActive()) { block('Another mission is pending. Resume or cancel it before starting a new mission.'); return true; }
     // Show real planning state while the structured request is in flight.
     mission = { version: 1, id: uid('mission'), title: 'Planning mission', objective: clean(text, 2400), createdAt: Date.now(), updatedAt: Date.now(), status: 'planning', currentStep: 0, steps: [], evidence: [], failures: [], revisions: [], corrections: [], outcome: null };
@@ -337,7 +340,27 @@
     addEvidence({ tool: b.type, kind: 'observation', success: !failed, reference: b.tool_use_id, summary: JSON.stringify(data || {}).slice(0, 800) });
   });
   J.on('conversation-cleared', () => { cancel(); mission = null; approvals.clear(); calls.clear(); J.save('mission', null); });
-  J.agent = { statuses: STATUSES, needsMission, parseJSON, normalizePlan, start, run, current: () => mission && copy(mission),
+  function interrupt() {
+    if (!mission || !mission.durable) return;
+    approvals.clear(); calls.clear();
+    mission.status = 'waiting';
+    mission.outcome = 'Worker interrupted. Explicit continuation is required; no work resumes automatically.';
+    const step = currentStep();
+    if (step && step.status !== 'completed') step.status = 'pending';
+    publish('waiting');
+  }
+  function importSnapshot(saved) {
+    if (!durableRun || !saved || saved.version !== 1 || !Array.isArray(saved.steps) || !saved.steps.length || !saved.durable || saved.durable.runId !== durableRun.runId) return false;
+    const candidate = copy(saved);
+    candidate.status = candidate.currentStep === candidate.steps.length && candidate.steps.every(step => step.status === 'completed' && step.resultSummary && step.evidence.length) ? 'completed' : 'waiting';
+    J.save('mission', candidate); mission = null; restore();
+    if (mission && mission.status === 'completed') publish('complete');
+    return !!mission && mission.id === candidate.id;
+  }
+  J.agent = { attachRun: run => {
+    if (mission && mission.durable && mission.durable.runId !== run.runId && !executing()) mission = null;
+    durableRun = copy(run);
+  }, detachRun: () => { durableRun = null; }, importSnapshot, interrupt, statuses: STATUSES, needsMission, parseJSON, normalizePlan, start, run, current: () => mission && copy(mission),
     isActive, executing, intent, prepare, context, batches, beforeTool, observeFiles, recordToolResult, verifyStep, review,
     replan, correct, cancel, block, finish, receipt, restore,
     diagnostics: () => mission && ({ id: mission.id, status: mission.status, currentStep: mission.currentStep, stepCount: mission.steps.length, retries: Math.max(0, (currentStep() || {}).attempts - 1) || 0, updatedAt: mission.updatedAt }) };

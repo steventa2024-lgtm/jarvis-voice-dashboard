@@ -358,6 +358,7 @@
   let hasKnowledge = false;
   let hasGoogle = false;
   let hasMemory = false;
+  let hasTasks = false;
   let hasVision = false;
   let hasRecall = false;
   let hasFiles = false;
@@ -464,6 +465,7 @@
      review flow needs the fields — the id, whether the file existed, the diff
      itself — which a summary has already thrown away. */
   async function filesRaw(payload) {
+    if (J.tasks && J.tasks.background() && payload.action !== 'discard' && !await J.tasks.ensureClaim()) return { ok: false, error: 'Scheduled run is no longer owned; no additional action was dispatched.' };
     const res = await fetch('api/files/command', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -501,6 +503,7 @@
   const awaitingReview = new Map();    // change id -> settle(verdict)
 
   function reviewMode() {
+    if (J.tasks && J.tasks.background()) return 'all';
     const m = J.settings.reviewWrites;
     return (m === 'off' || m === 'all' || m === 'overwrite') ? m : 'overwrite';
   }
@@ -1378,6 +1381,7 @@
 
   function toolList() {
     const tools = CLIENT_TOOLS.slice();
+    if (hasTasks && J.tasks && !J.tasks.background()) tools.push(J.tasks.tool);
     if (hasSpotify) tools.push(SPOTIFY_TOOL);
     if (hasKnowledge) tools.push(KNOWLEDGE_TOOL);
     if (hasGoogle) tools.push(GOOGLE_TOOL);
@@ -1845,6 +1849,7 @@
 
   async function execClientTool(name, input) {
     try {
+      if (name === 'tasks' && J.tasks) return await J.tasks.modelCommand(input, lastUserText);
       if (name === 'spotify') return await spotify(input.action, input.query, input.value);
       if (name === 'lookup')  return await runLookup(input.source, input.query);
       if (name === 'google')  return await googleCmd(input.action, input.query);
@@ -2251,6 +2256,7 @@
           localSearch = true;
           J.log('Local search proxy available — web lookups enabled', 'ok', 'net');
         }
+        if (info && info.tasks) { hasTasks = true; J.taskServiceAvailable = true; J.emit('tasks:available'); }
         if (info && info.spotify) {
           hasSpotify = true;
         }
@@ -3254,7 +3260,16 @@
      that answers questions you stopped caring about. */
   let queued = null;
 
-  async function send(text) {
+  async function send(text, options) {
+    options = options || {};
+    if (!options.background && J.tasks && J.tasks.background() && !busy) {
+      J.tasks.deferForeground(() => send(text));
+      return;
+    }
+    if (!options.background && J.agent && J.agent.current() && J.agent.current().durable && ['resume', 'correction'].includes(J.agent.intent(text)) && !busy) {
+      if (J.tasks) await J.tasks.resumeLinked(text);
+      return;
+    }
     const intent = J.agent && J.agent.intent(text);
     if (intent === 'silence') { J.voice.shutUp(); return; }
     if (intent === 'cancel' && J.agent.isActive()) { abort(); return; }
@@ -3281,6 +3296,7 @@
     controller = new AbortController();
     const started = performance.now();
 
+    if (!options.background && J.tasks) J.tasks.beginUserTurn();
     lastUserText = text;
     lastReplyText = '';
     /* Anything attached is resolved to text before the turn starts. Images go
@@ -3289,7 +3305,7 @@
        main model receives is always words, which is what lets this work no
        matter which model is selected. */
     let attachmentContext = '';
-    const files = (typeof J.takeAttachments === 'function') ? J.takeAttachments() : null;
+    const files = !options.background && (typeof J.takeAttachments === 'function') ? J.takeAttachments() : null;
 
     if (files && files.length) {
       for (const f of files) {
@@ -3322,6 +3338,8 @@
     if (earlier) live.push({ type: 'text', text: earlier });
     if (recalled) live.push({ type: 'text', text: recalled });
     if (before) live.push({ type: 'text', text: before });
+    if (J.tasks && J.tasks.schedulingIntent(text) && !options.background) live.push({ type: 'text', text: 'The user requests future or recurring work. Use the tasks tool to save the trusted objective; do not execute its actions now. Ask for clarification for ambiguous times.' });
+    if (options.background) live.push({ type: 'text', text: 'This is a scheduled mission. Results are silent. Existing approvals remain required; unavailable or disallowed actions must be reported honestly. Do not schedule other tasks.' });
     live.push({ type: 'text', text: text + attachmentContext });
     messages[messages.length - 1] = { role: 'user', content: live };
 
@@ -3345,7 +3363,7 @@
     let mergeNextReply = false;    // fold the post-check reply into the last one
 
     try {
-      if (J.agent) {
+      if (J.agent && !(J.tasks && J.tasks.schedulingIntent(text) && !options.background)) {
         missionTurn = await J.agent.prepare(text, missionControl, toolList().filter(t => t.name).map(t => t.name + ': ' + String(t.description || '').slice(0, 180)), !(turnModel && activeRoute && activeRoute.tools === false));
       }
       for (;;) {
@@ -3422,6 +3440,7 @@
 
           const batches = missionTurn ? J.agent.batches(calls, LANES) : Array.from({ length: Math.ceil(calls.length / LANES) }, (_, i) => calls.slice(i * LANES, (i + 1) * LANES));
           for (const batch of batches) {
+            if (options.background && J.tasks && !await J.tasks.ensureClaim()) break;
             if (missionTurn && controller.signal.aborted) break;
             await Promise.all(batch.map(async (call, k) => {
               if (missionTurn && (controller.signal.aborted || !J.agent.beforeTool(call))) {
@@ -3553,7 +3572,8 @@
       if (queued) {
         const next = queued;
         queued = null;
-        setTimeout(() => send(next), 120);
+        if (options.background && J.tasks) J.tasks.deferForeground(() => send(next));
+        else setTimeout(() => send(next), 120);
       }
 
       const ms = Math.round(performance.now() - started);
@@ -3561,7 +3581,7 @@
       const tok = J.$('#tokensVal'); if (tok) tok.textContent = (parseInt(tok.textContent, 10) || 0) + totalOut;
 
       /* Self-critique, when asked for and when the question warranted it. */
-      if (J.settings.critique && J.settings.critique !== 'off'
+      if (!options.background && J.settings.critique && J.settings.critique !== 'off'
           && lastReplyText && lastUserText
           && (J.settings.critique === 'always' || difficulty(lastUserText) === 'hard')) {
         try {

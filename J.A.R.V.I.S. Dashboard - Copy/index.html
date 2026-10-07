@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="tasks.css">
 </head>
 <body class="booting">
 
@@ -269,6 +270,7 @@
 
       <div class="tabpane" data-pane="inbox" hidden>
         <div class="pane-bar">
+          <button class="mini" id="tasksOpen" type="button">automations</button>
           <button class="mini" id="inboxSeen" type="button">mark read</button>
           <button class="mini" id="inboxClear" type="button">clear</button>
           <span class="pane-note" id="inboxNote">&nbsp;</span>
@@ -758,6 +760,22 @@
   <div class="ambient-hint">say &ldquo;Hey Jarvis&rdquo; &nbsp;&middot;&nbsp; or touch anything</div>
 </div>
 
+<div id="tasksOverlay" hidden>
+  <section class="msg-body tasks-surface" role="region" aria-labelledby="tasksHeading">
+    <div class="pane-bar"><h2 id="tasksHeading">AUTOMATIONS</h2><button class="mini" id="tasksClose" type="button">close</button></div>
+    <p id="taskNote" role="status">PC local time · results stay silent</p>
+    <details><summary>Schedule an objective</summary>
+      <form id="taskCreate">
+        <label>Title<input id="taskTitle" required maxlength="160"></label>
+        <label>Objective<textarea id="taskObjective" required maxlength="2400"></textarea></label>
+        <label>Schedule<input id="taskSchedule" required maxlength="200" placeholder="every morning at 8"></label>
+        <label>Actions<select id="taskPolicy"><option value="read_only">Read, inspect and validate</option><option value="reviewed_writes">Allow writes with existing diff review</option></select></label>
+        <button class="mini" type="submit">schedule</button>
+      </form>
+    </details>
+    <div id="taskList" aria-live="polite"></div>
+  </section>
+</div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="js/core.js"></script>
@@ -771,5 +789,6 @@
 <script src="js/watch.js"></script>
 <script src="js/palette.js"></script>
 <script src="js/app.js"></script>
+<script src="js/tasks.js"></script>
 </body>
 </html>

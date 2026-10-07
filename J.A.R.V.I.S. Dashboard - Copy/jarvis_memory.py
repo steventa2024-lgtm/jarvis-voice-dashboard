@@ -185,7 +185,7 @@ _UNITS = {'second': 1, 'seconds': 1, 'sec': 1, 'secs': 1,
           'day': 86400, 'days': 86400, 'week': 604800, 'weeks': 604800}
 
 
-def parse_when(text):
+def parse_when(text, now=None):
     """Turn 'in 10 minutes', 'at 7pm', 'tomorrow at 9' into an epoch time.
 
     Deliberately small: these are the shapes people actually say out loud, and
@@ -193,7 +193,7 @@ def parse_when(text):
     need.
     """
     t = (text or '').lower().strip()
-    now = time.time()
+    now = time.time() if now is None else now
 
     m = re.search(r'in\s+(\d+(?:\.\d+)?)\s*([a-z]+)', t)
     if m and m.group(2) in _UNITS:
@@ -729,7 +729,7 @@ def episode_stats():
 NOTICE_KEEP = 200
 
 
-def add_notice(text, kind='note', source=''):
+def add_notice(text, kind='note', source='', dedupe_key=None):
     text = (text or '').strip()
     if not text:
         return {'ok': False, 'error': 'A notice needs something to say.'}
@@ -739,7 +739,9 @@ def add_notice(text, kind='note', source=''):
         # The same observation arriving twice is one thing worth knowing, not
         # two. A watcher that fires every minute must not fill the queue.
         for n in d['notices']:
-            if n['text'] == text and not n.get('seen'):
+            if dedupe_key and n.get('dedupe_key') == dedupe_key:
+                return {'ok': True, 'duplicate': True, 'id': n['id']}
+            if not dedupe_key and n['text'] == text and not n.get('seen'):
                 n['at'] = time.time()
                 n['repeats'] = n.get('repeats', 1) + 1
                 _write(d)
@@ -748,6 +750,8 @@ def add_notice(text, kind='note', source=''):
 
         row = {'id': _next_id(d['notices']), 'text': text, 'kind': kind,
                'source': source or '', 'at': time.time(), 'seen': False}
+        if dedupe_key:
+            row['dedupe_key'] = dedupe_key
         d['notices'].append(row)
         d['notices'] = d['notices'][-NOTICE_KEEP:]
         _write(d)

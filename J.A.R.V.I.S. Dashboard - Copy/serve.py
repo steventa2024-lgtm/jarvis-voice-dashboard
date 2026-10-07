@@ -21,6 +21,7 @@ import http.server
 import socketserver
 import sys
 import webbrowser
+import threading
 
 # ===========================================================================
 #  Search and fetch, proxied through this server.
@@ -711,6 +712,29 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
 
+        if parsed.path == '/api/tasks/command':
+            if not _is_loopback(self.client_address[0]):
+                return self._json_out({'ok': False, 'error': 'Tasks are local only.'}, 403)
+            host = urllib.parse.urlparse('http://' + self.headers.get('Host', '')).hostname
+            if host not in ('localhost', '127.0.0.1', '::1'):
+                return self._json_out({'ok': False, 'error': 'Task requests require a loopback host.'}, 403)
+            origin = self.headers.get('Origin')
+            if origin and (urllib.parse.urlparse(origin).scheme not in ('http', 'https') or urllib.parse.urlparse(origin).netloc != self.headers.get('Host')):
+                return self._json_out({'ok': False, 'error': 'Task requests must use this origin.'}, 403)
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                if not 0 < length <= 65536 or self.headers.get('Content-Type', '').split(';')[0].strip() != 'application/json':
+                    raise ValueError('Send bounded application/json task commands.')
+                data = _json.loads(self.rfile.read(length).decode('utf-8'))
+                result = task_store().command(data)
+                return self._json_out(result, 200 if result.get('ok') else 400)
+            except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+                return  # A disconnected worker is recovered by its durable lease.
+            except (ValueError, UnicodeError):
+                return self._json_out({'ok': False, 'error': 'Invalid task request.'}, 400)
+            except Exception:
+                return self._json_out({'ok': False, 'error': 'Task storage is unavailable. Ordinary chat remains available.'}, 503)
+
         if parsed.path == '/api/extract':
             # PDFs and .docx cannot be read in the browser. The document indexer
             # already knows how, so an upload is written to a temp file, read
@@ -1072,7 +1096,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                                    'knowledge': True, 'google': True, 'memory': True, 'vision': True,
                                    'recall': True, 'files': True, 'jobs': True, 'lessons': True,
                                    'apply': True, 'video': True, 'hunt': True, 'minecraft': True,
-                                   'desktop': True})
+                                   'desktop': True, 'tasks': True})
 
         # ---- Spotify OAuth lives on the server; see jarvis_spotify.py ----
         if route == '/api/screenshot':
@@ -1299,6 +1323,20 @@ class Server(socketserver.ThreadingTCPServer):
     daemon_threads = True               # Ctrl+C does not wait on open sockets
 
 
+# A fixed private runtime path; clients never select a database.
+_task_store = None
+_task_init_lock = threading.Lock()
+
+
+def task_store():
+    global _task_store
+    with _task_init_lock:
+        if _task_store is None:
+            import jarvis_tasks
+            _task_store = jarvis_tasks.TaskStore(os.path.join(os.path.dirname(__file__), 'jarvis_tasks.db'))
+        return _task_store
+
+
 def main():
     try:
         httpd = Server(('', PORT), Handler)
@@ -1315,6 +1353,13 @@ def main():
     print('  Ctrl+C to stop.')
     print()
 
+    scheduler = None
+    try:
+        import jarvis_tasks
+        scheduler = jarvis_tasks.Scheduler(task_store())
+        scheduler.start()
+    except Exception:
+        print('  Task storage unavailable; ordinary dashboard routes remain available.')
     if OPEN_BROWSER:
         webbrowser.open(url)
     try:
@@ -1322,6 +1367,8 @@ def main():
     except KeyboardInterrupt:
         print('\n  stopped.\n')
     finally:
+        if scheduler:
+            scheduler.stop()
         httpd.server_close()
     return 0
 

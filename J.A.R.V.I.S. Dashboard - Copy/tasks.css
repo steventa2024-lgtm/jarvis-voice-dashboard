@@ -1,0 +1,16 @@
+/* Compact task controls inside the existing transcript. No dashboard geometry changes. */
+.tasks-surface { width: 100%; min-width: 0; max-height: 230px; overflow-y: auto; padding: 12px; box-sizing: border-box; border: 1px solid var(--line, rgba(53,214,255,.18)); }
+.tasks-surface h2 { font-size: 16px; letter-spacing: .12em; margin: 0; }
+.tasks-surface .pane-bar { justify-content: space-between; }
+.tasks-surface label { display: block; margin: 8px 0; font-size: 12px; }
+.tasks-surface input, .tasks-surface textarea, .tasks-surface select { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; background: var(--bg); color: inherit; border: 1px solid var(--line, rgba(53,214,255,.18)); padding: 8px; font: inherit; }
+.tasks-surface textarea { min-height: 52px; resize: vertical; }
+.tasks-surface p { margin: 6px 0; font-size: 12px; overflow-wrap: anywhere; }
+.durable-task { border-top: 1px solid var(--line, rgba(53,214,255,.18)); padding: 12px 0; overflow-wrap: anywhere; }
+.task-controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.task-run { padding: 6px 0; border-top: 1px solid var(--line, rgba(53,214,255,.18)); }
+.tasks-surface summary { cursor: pointer; font-size: 12px; }
+#taskNote { font-size: 11px; }
+
+#tasksOverlay { display: block; flex: 0 0 auto; min-width: 0; max-width: 82ch; }
+#tasksOverlay[hidden] { display: none; }

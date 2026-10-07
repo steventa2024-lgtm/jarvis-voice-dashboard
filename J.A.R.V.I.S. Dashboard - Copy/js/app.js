@@ -31,7 +31,7 @@
     const state = document.createElement('div');
     state.className = 'mission-state'; state.setAttribute('role', 'status'); state.setAttribute('aria-live', 'polite');
     const done = m.steps.filter(s => s.status === 'completed').length;
-    state.textContent = m.status.toUpperCase().replace(/_/g, ' ') + ' · ' + done + '/' + m.steps.length;
+    state.textContent = (m.durable ? 'SCHEDULED MISSION · ' : '') + m.status.toUpperCase().replace(/_/g, ' ') + ' · ' + done + '/' + m.steps.length;
     const list = document.createElement('ol');
     list.className = 'mission-steps';
     const symbols = { completed: '✓', running: '●', verifying: '◉', failed: '!', blocked: '!', skipped: '–', pending: '○' };
@@ -158,7 +158,7 @@
       if (buffer.trim()) live.innerHTML = J.md(buffer);
       else if (!live.textContent.trim()) live.closest('.msg').remove();
     }
-    J.voice.flush();
+    if (!J.tasks || !J.tasks.background()) J.voice.flush();
 
     live = null;
     buffer = '';
@@ -183,7 +183,7 @@
   J.on('text', chunk => {
     buffer += chunk;
     queuePaint();
-    J.voice.feed(chunk);
+    if (!J.tasks || !J.tasks.background()) J.voice.feed(chunk);
     if (J.orb.getState() === 'thinking' && !J.settings.speak) J.orb.setState('speaking');
     J.status('responding', null);
   });
