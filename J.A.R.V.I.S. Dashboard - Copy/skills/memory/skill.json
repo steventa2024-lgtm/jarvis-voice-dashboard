@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "memory",
+  "name": "Memory & Reminders",
+  "version": "1.0.0",
+  "description": "Set, list and cancel reminders, and search what you have been told about the user. Reminders are held outside the browser, so they survive a reload or a restart and still fire if the dashboard was closed when they came due. Use recall when you need something you were told before but is not in front of you.",
+  "tools": [
+    {
+      "name": "reminders",
+      "description": "Set, list and cancel reminders, and search what you have been told about the user. Reminders are held outside the browser, so they survive a reload or a restart and still fire if the dashboard was closed when they came due. Use recall when you need something you were told before but is not in front of you.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "set",
+              "list",
+              "cancel",
+              "recall"
+            ],
+            "description": "set: create a reminder. list: what is pending. cancel: remove one. recall: search your memory of the user."
+          },
+          "text": {
+            "type": "string",
+            "description": "For set: what to remind them of. For cancel: the id number or a distinctive phrase. For recall: what you are looking for."
+          },
+          "when": {
+            "type": "string",
+            "description": "For set only. \"in 20 minutes\", \"at 7pm\", \"tomorrow at 9\"."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "memory"
+  },
+  "permissions": {
+    "reminders": {
+      "set": "MODIFY_MEMORY",
+      "list": "READ_MEMORY",
+      "cancel": "MODIFY_MEMORY",
+      "recall": "READ_MEMORY"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "memory"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

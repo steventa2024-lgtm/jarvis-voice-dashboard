@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "web",
+  "name": "Web",
+  "version": "1.0.0",
+  "description": "Search the live web. Use this whenever the answer depends on current information, on anything after your training cutoff, or on a specific fact you are not certain of. Returns titles, URLs and short snippets. Follow up with web_fetch when a snippet is not enough.",
+  "tools": [
+    {
+      "name": "web_search",
+      "description": "Search the live web. Use this whenever the answer depends on current information, on anything after your training cutoff, or on a specific fact you are not certain of. Returns titles, URLs and short snippets. Follow up with web_fetch when a snippet is not enough.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query, phrased as you would type it into a search engine."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "web_fetch",
+      "description": "Retrieve one web page and read its text. Use it on a URL returned by web_search when the snippet does not answer the question. The page is stripped to readable text and truncated.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Absolute http(s) URL, normally one that web_search returned."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "web"
+  },
+  "permissions": {
+    "web_search": {
+      "*": "BROWSER_READ"
+    },
+    "web_fetch": {
+      "*": "BROWSER_READ"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "search"
+    ],
+    "mode": "all",
+    "client_requirements": [
+      "web_search"
+    ]
+  },
+  "provider_tools": {
+    "anthropic": {
+      "web_search": {
+        "type": "web_search_20260209",
+        "name": "web_search",
+        "max_uses": 8
+      },
+      "web_fetch": {
+        "type": "web_fetch_20260209",
+        "name": "web_fetch",
+        "max_uses": 5
+      }
+    }
+  }
+}

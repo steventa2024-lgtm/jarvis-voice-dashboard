@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "job_hunt",
+  "name": "Job Hunt",
+  "version": "1.0.0",
+  "description": "THE job search. Any request to start a job hunt or job search — \"start my job hunt\", \"start my job search\", \"find me a job\", \"look for barista jobs\", \"any new openings\" — is this tool, and nothing else. It searches LinkedIn, Indeed, Google Jobs and ZipRecruiter live, which is where hourly, hospitality and retail work actually is, scores each listing against his resume with a local model, and hands back the three best as numbered options. start begins a session and returns three matches. pending re-reads the three currently on the table. choose takes 1, 2 or 3 and opens that application form, filled in, STOPPING before submit — it never submits and you must never say or imply that it did. decline sets those three aside for good and fetches three more. stop ends the session. The session keeps going on its own: a fresh three replaces the old three every ten minutes, and it does not end until he picks one or stops it. \"Stop the job search\", \"stop hunt\", \"stop job hunt\", \"that is enough\" — all of those mean action stop, immediately, without asking him to confirm. When a batch comes back, the interface has already put the three on his screen as a card. Say one short line naming the strongest and ask \"Option 1, 2, 3, or decline all?\" — then call choose or decline with what he says. When choose succeeds the hunt is OVER by design and the batch is deliberately empty — that is a finished hunt, not a broken one. Do NOT call pending afterwards to check, and never report being unable to proceed: the form is open on his screen with his details in it. Say what was opened and that he should review it and press submit himself. If he answers with a number and you are not certain a batch is on the table, call pending first and act on what it returns. Never assume from the conversation that three are waiting — the batch changes on a timer, so the server is the only thing that knows. sign_in opens the application browser profile in an ordinary Edge window so he can log into a job site by hand. Offer it the moment choose reports needs_sign_in, and say plainly why: the login cannot be done from the automated window because Google refuses to authenticate one, so he signs in once himself and every later form opens already authenticated. Do not try to sign him in, and never ask him for a password. NEVER answer a job search with web_search, and NEVER open a job site with control_interface. Those look like an answer and do nothing: no scoring against his resume, no memory of what he has already turned down, and no way to apply. If this tool fails, say it failed.",
+  "tools": [
+    {
+      "name": "job_hunt",
+      "description": "THE job search. Any request to start a job hunt or job search — \"start my job hunt\", \"start my job search\", \"find me a job\", \"look for barista jobs\", \"any new openings\" — is this tool, and nothing else. It searches LinkedIn, Indeed, Google Jobs and ZipRecruiter live, which is where hourly, hospitality and retail work actually is, scores each listing against his resume with a local model, and hands back the three best as numbered options. start begins a session and returns three matches. pending re-reads the three currently on the table. choose takes 1, 2 or 3 and opens that application form, filled in, STOPPING before submit — it never submits and you must never say or imply that it did. decline sets those three aside for good and fetches three more. stop ends the session. The session keeps going on its own: a fresh three replaces the old three every ten minutes, and it does not end until he picks one or stops it. \"Stop the job search\", \"stop hunt\", \"stop job hunt\", \"that is enough\" — all of those mean action stop, immediately, without asking him to confirm. When a batch comes back, the interface has already put the three on his screen as a card. Say one short line naming the strongest and ask \"Option 1, 2, 3, or decline all?\" — then call choose or decline with what he says. When choose succeeds the hunt is OVER by design and the batch is deliberately empty — that is a finished hunt, not a broken one. Do NOT call pending afterwards to check, and never report being unable to proceed: the form is open on his screen with his details in it. Say what was opened and that he should review it and press submit himself. If he answers with a number and you are not certain a batch is on the table, call pending first and act on what it returns. Never assume from the conversation that three are waiting — the batch changes on a timer, so the server is the only thing that knows. sign_in opens the application browser profile in an ordinary Edge window so he can log into a job site by hand. Offer it the moment choose reports needs_sign_in, and say plainly why: the login cannot be done from the automated window because Google refuses to authenticate one, so he signs in once himself and every later form opens already authenticated. Do not try to sign him in, and never ask him for a password. NEVER answer a job search with web_search, and NEVER open a job site with control_interface. Those look like an answer and do nothing: no scoring against his resume, no memory of what he has already turned down, and no way to apply. If this tool fails, say it failed.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "start",
+              "pending",
+              "choose",
+              "decline",
+              "stop",
+              "sign_in"
+            ],
+            "description": "start: begin and return three matches. pending: what is on the table now. choose: pick one and open its form. decline: set these three aside and fetch three more. stop: end the session."
+          },
+          "option": {
+            "type": "number",
+            "description": "1, 2 or 3 — which of the three on the table, for choose."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "job_hunt"
+  },
+  "permissions": {
+    "job_hunt": {
+      "start": "MODIFY_STATE",
+      "pending": "READ_STATE",
+      "choose": "BROWSER_INTERACT",
+      "decline": "MODIFY_STATE",
+      "stop": "MODIFY_STATE",
+      "sign_in": "OPEN_URL"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "hunt"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

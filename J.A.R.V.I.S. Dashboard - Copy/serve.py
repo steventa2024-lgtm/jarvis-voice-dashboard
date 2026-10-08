@@ -644,7 +644,7 @@ def grab_screen():
 # Files that must never be served, however they are asked for.
 PRIVATE = (
     'spotify_auth.json', 'google_auth.json', 'jarvis_state.json',
-    '.gitignore', 'launch.json',
+    '.gitignore', 'launch.json', 'jarvis_skills_state.json', 'jarvis_skills_state.json.tmp',
 )
 PRIVATE_EXT = ('.py', '.db', '.db-wal', '.db-shm', '.env', '.pem', '.key')
 
@@ -713,7 +713,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def _permission_gate(self, route):
         """Single server boundary, before any protected handler executes."""
         import jarvis_permissions as permissions
-        if route not in permissions.ROUTES and route != '/api/permissions/command':
+        if route not in permissions.ROUTES and route not in ('/api/permissions/command','/api/skills/command'):
             return False
         host = urllib.parse.urlparse('http://' + self.headers.get('Host', '')).hostname
         origin = self.headers.get('Origin')
@@ -731,6 +731,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.rfile = io.BytesIO(raw)  # Original handlers consume the exact same bytes.
             store = permission_store()
             session = self.headers.get('X-Jarvis-UI')
+            if route == '/api/skills/command':
+                if session not in store.sessions:
+                    raise ValueError('Trusted UI session required for skill management.')
+                self._json_out(skill_registry().command(data))
+                return True
             if route == '/api/permissions/command':
                 if data.get('action') == 'context' and data.get('context', {}).get('background'):
                     run = task_store().command({'action': 'get_run', 'run_id': data['context'].get('task_run_id')})
@@ -749,6 +754,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if tool == 'tasks' and data.get('action') in ('due','claim','check_claim','heartbeat','complete','fail','interrupt','get_run'):
                 return False  # Fenced Phase 2 runtime mechanics; never model tools.
             proposed = {'kind': 'route', 'tool': tool, 'input': data}
+            if not skill_action_allowed(proposed):
+                self._json_out({'ok': False, 'error': 'FAILED - Skill is disabled, invalid or unavailable.'}, 403)
+                return True
             receipt = self.headers.get('X-Jarvis-Authorization')
             if receipt:
                 allowed = store.consume(proposed, receipt, session)
@@ -1148,12 +1156,30 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         route = parsed.path
         args = urllib.parse.parse_qs(parsed.query)
+        if route == '/api/skills' or route == '/api/skills/status' or route.startswith('/api/skills/'):
+            try:
+                registry = skill_registry()
+                if route in ('/api/skills','/api/skills/status'):
+                    return self._json_out(registry.snapshot())
+                if route.startswith('/api/skills/tool/'):
+                    name = urllib.parse.unquote(route[len('/api/skills/tool/'):])
+                    if not registry.enabled_tool(name):
+                        return self._json_out({'ok':False,'error':'FAILED - Skill is disabled, invalid or unavailable.'},403)
+                    skill = next(s for s in registry.snapshot()['skills'] if any(t['name']==name for t in s['tools']))
+                    return self._json_out({'ok':True,'skill':skill})
+                return self._json_out(registry.command({'action':'get','id':route[len('/api/skills/'):]}))
+            except (ValueError, StopIteration):
+                return self._json_out({'ok':False,'error':'Unknown skill.'},404)
+            except Exception:
+                return self._json_out({'ok':False,'error':'Skill registry unavailable.'},503)
         import jarvis_permissions
         proposed = jarvis_permissions.read_action(route, args)
         if proposed:
             try:
                 store = permission_store()
                 session = self.headers.get('X-Jarvis-UI')
+                if route != '/api/memory/due' and not skill_action_allowed(proposed):
+                    return self._json_out({'ok':False,'error':'FAILED - Skill is disabled, invalid or unavailable.'},403)
                 receipt = self.headers.get('X-Jarvis-Authorization')
                 if receipt:
                     allowed = store.consume(proposed, receipt, session)
@@ -1170,12 +1196,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             # server holds the API key and proxies chat", which it does not —
             # claiming it would send every conversation to a route that is
             # not implemented here.
-            return self._json_out({'search': True, 'fetch': True, 'llm': True,
-                                   'launch': True, 'spotify': True,
-                                   'knowledge': True, 'google': True, 'memory': True, 'vision': True,
-                                   'recall': True, 'files': True, 'jobs': True, 'lessons': True,
-                                   'apply': True, 'video': True, 'hunt': True, 'minecraft': True,
-                                   'desktop': True, 'tasks': True})
+            return self._json_out(server_capabilities())
 
         # ---- Spotify OAuth lives on the server; see jarvis_spotify.py ----
         if route == '/api/screenshot':
@@ -1402,6 +1423,55 @@ class Server(socketserver.ThreadingTCPServer):
     daemon_threads = True               # Ctrl+C does not wait on open sockets
 
 
+def server_capabilities():
+    return {'search': True, 'fetch': True, 'llm': True,
+                                   'launch': True, 'spotify': True,
+                                   'knowledge': True, 'google': True, 'memory': True, 'vision': True,
+                                   'recall': True, 'files': True, 'jobs': True, 'lessons': True,
+                                   'apply': True, 'video': True, 'hunt': True, 'minecraft': True,
+                                   'desktop': True, 'tasks': True}
+
+
+def skill_probe(manifest):
+    values = [bool(server_capabilities().get(name)) for name in manifest['availability']['capabilities']]
+    present = any(values) if manifest['availability']['mode']=='any' else all(values)
+    if not present:
+        return 'unavailable', 'Required server capability is absent.'
+    adapter = manifest['runtime']['adapter']
+    if adapter in ('spotify','google'):
+        connected = (spotify if adapter=='spotify' else google).status().get('connected', False)
+        if not connected:
+            return 'degraded', 'Not connected; existing setup/failure workflow retained.'
+    if adapter=='video' and (not video.PIXABAY_KEY or not os.path.isfile(video.VOICE)):
+        return 'degraded', 'Video credentials/voice may need configuration; existing workflow retained.'
+    return 'available', 'Trusted adapter installed.'
+
+
+_skill_registry = None
+_skill_init_lock = threading.Lock()
+
+
+def skill_registry():
+    global _skill_registry
+    with _skill_init_lock:
+        if _skill_registry is None:
+            import jarvis_skills
+            base = os.path.dirname(__file__)
+            _skill_registry = jarvis_skills.SkillRegistry(os.path.join(base,'skills'),os.path.join(base,'jarvis_skills_state.json'),probe=skill_probe)
+        return _skill_registry
+
+
+def skill_action_allowed(action):
+    if action['tool']=='open':
+        return True  # Required core interface.
+    registry = skill_registry()
+    if action['tool']=='files':
+        description = describe_permission(action)
+        if registry.protected_resource(description['target']):
+            return False  # Model/file tools cannot mutate registry manifests or enabled state.
+    return registry.route_enabled(action)
+
+
 def describe_permission(action):
     """Resolve held proposals from server state, never caller-provided scope."""
     import jarvis_permissions
@@ -1474,6 +1544,11 @@ def main():
     print('  Ctrl+C to stop.')
     print()
 
+    try:
+        health = skill_registry().snapshot()['health']
+        print('  Skills loaded: %d; available: %d; degraded: %d; invalid: %d' % (health['loaded'],health['available'],health['degraded'],health['invalid']))
+    except Exception:
+        print('  Skill registry unavailable; normal chat remains available.')
     scheduler = None
     try:
         import jarvis_tasks

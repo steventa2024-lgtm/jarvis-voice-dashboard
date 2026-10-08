@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "google",
+  "name": "Google",
+  "version": "1.0.0",
+  "description": "Read the user calendar and inbox. Use agenda for what is coming up, mail for unread messages, and search_mail with a Gmail query for anything specific. Read-only: you cannot send, reply, delete or create anything. When they ask about their day, their schedule, whether they are free, or what has come in, use this rather than guessing.",
+  "tools": [
+    {
+      "name": "google",
+      "description": "Read the user calendar and inbox. Use agenda for what is coming up, mail for unread messages, and search_mail with a Gmail query for anything specific. Read-only: you cannot send, reply, delete or create anything. When they ask about their day, their schedule, whether they are free, or what has come in, use this rather than guessing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "agenda",
+              "mail",
+              "search_mail"
+            ],
+            "description": "agenda: upcoming calendar events. mail: unread messages. search_mail: a Gmail search."
+          },
+          "query": {
+            "type": "string",
+            "description": "For agenda: \"today\", \"tomorrow\", \"this week\", or \"3 days\". For search_mail: Gmail syntax such as \"from:bank newer_than:7d\"."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "google"
+  },
+  "permissions": {
+    "google": {
+      "agenda": "READ_CALENDAR",
+      "mail": "READ_EMAIL",
+      "search_mail": "READ_EMAIL"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "google"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

@@ -32,3 +32,7 @@ node_modules/
 *.bundle
 JarvisPrivateRecovery/
 UNSANITIZED-PRIVATE-*
+
+# Mk VIII built-in skill enable state
+jarvis_skills_state.json
+jarvis_skills_state.json.tmp

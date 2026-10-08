@@ -369,52 +369,10 @@
   let hasMinecraft = false;
   let hasVideo = false;
 
-  const WEB_TOOLS = [
-    {
-      name: 'web_search',
-      description:
-        'Search the live web. Use this whenever the answer depends on current information, on anything after your training cutoff, or on a specific fact you are not certain of. Returns titles, URLs and short snippets. Follow up with web_fetch when a snippet is not enough.',
-      input_schema: {
-        type: 'object',
-        properties: { query: { type: 'string', description: 'The search query, phrased as you would type it into a search engine.' } },
-        required: ['query']
-      }
-    },
-    {
-      name: 'web_fetch',
-      description:
-        'Retrieve one web page and read its text. Use it on a URL returned by web_search when the snippet does not answer the question. The page is stripped to readable text and truncated.',
-      input_schema: {
-        type: 'object',
-        properties: { url: { type: 'string', description: 'Absolute http(s) URL, normally one that web_search returned.' } },
-        required: ['url']
-      }
-    }
-  ];
 
   /* Narrow sources that return a fact rather than prose. Search is the wrong
      instrument for an exchange rate: it returns a page that might be months
      stale, where the ECB feed returns today's number. */
-  const KNOWLEDGE_TOOL = {
-    name: 'lookup',
-    description:
-      'Query a live data source directly. Faster and far more accurate than web_search for the things it covers, so prefer it when one fits: exchange rates, crypto prices, an encyclopaedia summary, the current headlines, what is on television, or daylight hours. Use web_search only for questions none of these sources answer.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        source: {
-          type: 'string',
-          enum: ['stocks', 'currency', 'crypto', 'wikipedia', 'news', 'tech_news', 'tv_tonight', 'daylight', 'sports'],
-          description: 'stocks: live quotes for a company, ticker or index - pass a name like "tesla and nvidia", a ticker, or leave the query empty for the major indices. currency: exchange rates from the ECB. crypto: coin prices. wikipedia: encyclopaedia summary. news: world headlines from RSS. tech_news: Hacker News front page. tv_tonight: TV schedule. daylight: sunrise and sunset. sports: live scores and fixtures from ESPN — pass a team ("braves"), a league ("nba"), or nothing for what is on today. USE THIS for any question about a game, a score or whether a team is playing; it answers in one call with the score, the status, the channel and the venue, which is what searching the web for it repeatedly fails to produce.'
-        },
-        query: {
-          type: 'string',
-          description: 'What to ask for. currency: "100 usd to eur". crypto: "bitcoin ethereum". wikipedia: the article subject. daylight: "lat,lon" taken from the device context. news and tech_news need nothing.'
-        }
-      },
-      required: ['source']
-    }
-  };
 
   async function runLookup(source, query) {
     if (!hasKnowledge) return 'FAILED - live data sources need the dashboard served by serve.py.';
@@ -794,23 +752,6 @@
          + 'to the user as though they asked for it.';
   }
 
-  const DESKTOP_TOOL = {
-    name: 'desktop',
-    description:
-      'See what the user is doing right now. clipboard returns whatever they last copied, active_window says which application is in front and what it is showing, and copy puts text on their clipboard. Check active_window when a request is ambiguous — the same question means something different in a code editor than in a music player. Use clipboard rather than asking them to paste something again.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['clipboard', 'active_window', 'copy'],
-          description: 'clipboard: read it. active_window: what is in front. copy: write to it.'
-        },
-        text: { type: 'string', description: 'For copy only: what to put on the clipboard.' }
-      },
-      required: ['action']
-    }
-  };
 
   async function desktopCmd(action, text) {
     if (!hasDesktop) return 'FAILED - desktop access needs the dashboard served by serve.py.';
@@ -829,70 +770,7 @@
     }
   }
 
-  const RECALL_TOOL = {
-    name: 'recall',
-    description:
-      'Search the user own documents and your past conversations with them. This is their private material - notes, contracts, manuals, code - indexed on this machine. Use it BEFORE web search whenever a question sounds like it concerns something of theirs, and use search_chats when they refer to something discussed before that you cannot see.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['search', 'search_chats', 'index', 'status'],
-          description: 'search: their documents. search_chats: earlier conversations. index: add a folder. status: what is indexed.'
-        },
-        query: { type: 'string', description: 'What to look for, phrased as a question or description rather than keywords.' },
-        folder: { type: 'string', description: 'For index only: the folder to read.' }
-      },
-      required: ['action']
-    }
-  };
 
-  const FILES_TOOL = {
-    name: 'files',
-    description:
-      'Work with files and build projects. find locates files, read returns their text, transcribe turns speech into text, media converts with ffmpeg. scaffold creates a project, write creates or replaces a file inside one, run executes it and hands you back everything it printed, list_project shows what is there, history lists past changes and revert undoes them. WRITE FILES RATHER THAN PRINTING CODE AT THE USER — they asked for a thing built, not for something to copy and paste. Every write is snapshotted with git, so any change can be undone, and a write that replaces existing work may be shown to the user for approval before it lands. Reading is limited to configured folders, writing only happens inside the projects folder, and you cannot delete anything.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['find', 'read', 'transcribe', 'media', 'scaffold', 'capabilities',
-                 'write', 'run', 'join', 'list_project', 'history', 'revert'],
-          description: 'capabilities tells you which folders are readable, which runners exist and whether ffmpeg is present.'
-        },
-        query: { type: 'string', description: 'For find: words from the filename.' },
-        path: { type: 'string', description: 'For transcribe and media: an absolute path. For write: a path RELATIVE to the project, such as "index.html" or "src/app.js" — never a drive letter or a Desktop path, since files only ever land inside the project folder. For read: either an absolute path, or a relative one alongside the project argument to read a file you built.' },
-        media_action: {
-          type: 'string',
-          description: 'For media, one named job: to_mp3, to_wav, to_mp4, to_gif, compress, audio_only, mute, trim, thumbnail, half_speed, double_speed, or one of the shaping jobs — vertical (9:16), square (1:1), web (1280 wide, streaming-ready), silent_web (the same with the audio stripped, for a muted hero background).'
-        },
-        paths: {
-          type: 'array', items: { type: 'string' },
-          description: 'For join only: absolute paths to two or more clips, in the order they should play.'
-        },
-        start: { type: 'string', description: 'For trim or thumbnail: a timestamp such as 00:01:30.' },
-        duration: { type: 'string', description: 'For trim: how long to keep.' },
-        name: { type: 'string', description: 'For scaffold: the project name.' },
-        kind: { type: 'string', description: 'For scaffold: web (one designed landing page), site (a four-page static site), mvp (front end plus a Python JSON API and a SQLite database), python, or node. web, site and mvp all start from a shared design foundation — tokens, a type scale, responsive grids, components and motion — so build ON that rather than writing CSS from nothing. Call capabilities if you are unsure what exists.' },
-        steps: {
-          type: 'array', items: { type: 'string' },
-          description: 'For scaffold: setup steps to run. Allowed: git_init, npm_init, npm_install, pip_install, venv.'
-        },
-        project: { type: 'string', description: 'For write, run, list_project, history and revert: which project. Also for read, when you want a file inside a project rather than an absolute path.' },
-        content: { type: 'string', description: 'For write: the complete new contents of the file.' },
-        why: { type: 'string', description: 'For write: a short note describing the change, used as the snapshot message.' },
-        steps_back: { type: 'number', description: 'For revert: how many changes to undo. Defaults to 1.' },
-        what: {
-          type: 'string',
-          description: 'For run: python, node, npm_test or pytest. Nothing else can be run and there is no way to pass a command line.'
-        },
-        entry: { type: 'string', description: 'For run with python or node: which file, relative to the project. Omit it and the obvious one is used — main.py, index.js and so on.' },
-        timeout: { type: 'number', description: 'For run: seconds to wait before stopping it. Defaults to 90, capped at 180.' }
-      },
-      required: ['action']
-    }
-  };
 
   /* Looking at what he built.
 
@@ -901,25 +779,6 @@
      to be, and everything else — so most of what reaches the vision model is
      not the page. This renders the page alone, at a known size, whether or not
      the preview pane is open. */
-  const PREVIEW_TOOL = {
-    name: 'see_preview',
-    description:
-      'Look at a page you built, as a browser actually draws it. Renders the project page on its own and has a vision model report what is there: layout, spacing, alignment, colour, anything cut off, overlapping or broken. Use it after building or changing anything visual and BEFORE telling the user it is done — it is the only way you can check your own work, and believing the code looks right is not the same as having looked. Then fix what it found and look again.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        project: { type: 'string', description: 'Which project to look at.' },
-        question: {
-          type: 'string',
-          description: 'What you want to know. Be specific: "is the header aligned with the cards, and is any text cut off" reads far better than "describe this".'
-        },
-        path: { type: 'string', description: 'Which page, relative to the project. Defaults to index.html.' },
-        width: { type: 'number', description: 'Viewport width in pixels. Defaults to 1280. Use 390 to see it as a phone would.' },
-        height: { type: 'number', description: 'Viewport height in pixels. Defaults to 900. Raise it to take in more of a long page.' }
-      },
-      required: ['project', 'question']
-    }
-  };
 
   /* The hunt, and the application after it.
 
@@ -938,79 +797,7 @@
      publish_packet opens YouTube Studio and shows where the file is. There is
      no upload call in the module behind this and there must not be one here -
      Zero presses publish, the same way he presses send on a job application. */
-  const VIDEO_TOOL = {
-    name: 'video',
-    description:
-      'Make a narrated 1080p video from stock footage, and prepare it for YouTube. '
-      + 'render takes a title and a list of beats - each beat is a stock search '
-      + 'query plus the line to say over it, and one beat becomes one shot of about '
-      + 'five seconds. Write the narration yourself: it should say something worth '
-      + 'hearing, and it must describe what the footage will actually show, because '
-      + 'the search query is what fetches the picture. list shows what has been made. '
-      + 'review returns one video with its drafted title, description and tags. '
-      + 'publish_packet opens YouTube Studio and reports where the file is. '
-      + 'IT NEVER UPLOADS. Say it is ready for him to review and publish - never say '
-      + 'it was posted, because it was not. Footage is real stock, so this suits '
-      + 'explainers, montages and documentary; it cannot make animation or '
-      + 'characters, and you should say so rather than trying.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['render', 'list', 'review', 'publish_packet'],
-          description: 'render: make one. list: what exists. review: read the draft. publish_packet: open Studio, stopping before publish.'
-        },
-        title: { type: 'string', description: 'For render: the video title.' },
-        beats: {
-          type: 'array',
-          description: 'For render: the shots, in order. Three to six is a good video.',
-          items: {
-            type: 'object',
-            properties: {
-              query: { type: 'string', description: 'Stock footage search, e.g. "espresso machine barista". This is what fetches the picture, so keep it concrete and literal.' },
-              say:   { type: 'string', description: 'The narration spoken over this shot. The field is named "say" - not "line", not "text".' }
-            },
-            required: ['query', 'say']
-          }
-        },
-        tags: {
-          type: 'array',
-          description: 'YouTube tags you choose - 8 to 15 of them, the words someone would actually search for. Write these yourself; leaving them out falls back to a crude word-frequency guess that is not worth shipping.',
-          items: { type: 'string' }
-        },
-        description: { type: 'string', description: 'The YouTube description in your own words. Chapters and footage credits are appended automatically, so do not write those.' },
-        id: { type: 'string', description: 'Which video, for review and publish_packet.' },
-        limit: { type: 'number', description: 'For list.' }
-      },
-      required: ['action']
-    }
-  };
 
-  const JOBS_TOOL = {
-    name: 'jobs',
-    description:
-      'Zero\'s job hunt. list shows listings already found, best match first, with a 0-1 score against his profile. scan checks the watched boards for new ones. shortlist narrows to those worth reading closely. analyse has a local model read one description against his resume and report matches, gaps and outright blockers. tailor drafts a resume and covering letter for one listing into ~/JarvisProjects/applications and reports any claim it made that his master resume does not support. prepare opens the application form in a real browser, fills the plain fields, and STOPS - it never submits, and you must never tell him it did. decide records interested or passed. '
-      + 'The watched boards are Greenhouse, Ashby, Lever and Workable, which are engineering and corporate ATSs. They do not carry hospitality, retail or hourly work and never will, so for anything of that kind - barista, cafe, food service, warehouse, front of house - use job_hunt instead, which searches LinkedIn, Indeed, Google Jobs and ZipRecruiter. This tool is for a named company\'s own board; job_hunt is for an actual job search.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['list', 'scan', 'shortlist', 'analyse', 'tailor', 'prepare',
-                 'decide', 'watchlist', 'profile'],
-          description: 'list: what he has found. scan: check the boards now. shortlist: the ones worth a slow read. analyse: read one against his resume. tailor: draft the packet. prepare: open and fill the form, stopping before submit. decide: mark interested or passed.'
-        },
-        id: { type: 'string', description: 'Which listing, for analyse, tailor, prepare and decide.' },
-        state: { type: 'string', enum: ['new', 'interested', 'passed', 'applied'],
-                 description: 'Filter for list.' },
-        verdict: { type: 'string', enum: ['interested', 'passed', 'applied', 'new'],
-                   description: 'For decide.' },
-        limit: { type: 'number', description: 'How many to return.' }
-      },
-      required: ['action']
-    }
-  };
 
   /* The guided hunt.
 
@@ -1020,154 +807,10 @@
      nothing, remembers nothing, and cannot apply. The description below is
      blunt about that on purpose: a tool that competes with web_search for an
      intent loses unless it says so outright. */
-  const HUNT_TOOL = {
-    name: 'job_hunt',
-    description:
-      'THE job search. Any request to start a job hunt or job search — "start my job hunt", "start my job search", "find me a job", "look for barista jobs", "any new openings" — is this tool, and nothing else. '
-      + 'It searches LinkedIn, Indeed, Google Jobs and ZipRecruiter live, which is where hourly, hospitality and retail work actually is, scores each listing against his resume with a local model, and hands back the three best as numbered options. '
-      + 'start begins a session and returns three matches. pending re-reads the three currently on the table. choose takes 1, 2 or 3 and opens that application form, filled in, STOPPING before submit — it never submits and you must never say or imply that it did. decline sets those three aside for good and fetches three more. stop ends the session. '
-      + 'The session keeps going on its own: a fresh three replaces the old three every ten minutes, and it does not end until he picks one or stops it. "Stop the job search", "stop hunt", "stop job hunt", "that is enough" — all of those mean action stop, immediately, without asking him to confirm. '
-      + 'When a batch comes back, the interface has already put the three on his screen as a card. Say one short line naming the strongest and ask "Option 1, 2, 3, or decline all?" — then call choose or decline with what he says. '
-      + 'When choose succeeds the hunt is OVER by design and the batch is deliberately empty — that is a finished hunt, not a broken one. Do NOT call pending afterwards to check, and never report being unable to proceed: the form is open on his screen with his details in it. Say what was opened and that he should review it and press submit himself. '
-      + 'If he answers with a number and you are not certain a batch is on the table, call pending first and act on what it returns. Never assume from the conversation that three are waiting — the batch changes on a timer, so the server is the only thing that knows. '
-      + 'sign_in opens the application browser profile in an ordinary Edge window so he can log into a job site by hand. Offer it the moment choose reports needs_sign_in, and say plainly why: the login cannot be done from the automated window because Google refuses to authenticate one, so he signs in once himself and every later form opens already authenticated. Do not try to sign him in, and never ask him for a password. '
-      + 'NEVER answer a job search with web_search, and NEVER open a job site with control_interface. Those look like an answer and do nothing: no scoring against his resume, no memory of what he has already turned down, and no way to apply. If this tool fails, say it failed.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['start', 'pending', 'choose', 'decline', 'stop', 'sign_in'],
-          description: 'start: begin and return three matches. pending: what is on the table now. choose: pick one and open its form. decline: set these three aside and fetch three more. stop: end the session.'
-        },
-        option: { type: 'number', description: '1, 2 or 3 — which of the three on the table, for choose.' }
-      },
-      required: ['action']
-    }
-  };
 
-  const MINECRAFT_TOOL = {
-    name: 'minecraft',
-    description:
-      'Build structures in his Minecraft world. "Build me a mansion", "a modern house", "a treehouse", "a cave base" - all this tool. It plans the structure and types /fill commands into the game chat, so a whole building goes up in seconds. It builds beside where he is standing, never around him. '
-      + 'structure picks WHAT. Buildings: house, beach_house (stilts, glass to the view, a deck), theater (raked seats, stage, curtain). A treehouse or cave base is a house with that palette. '
-      + 'Sport: football_stadium (gridiron, yard lines, end zones, goal posts), soccer_stadium (centre circle, penalty areas, goals), basketball_arena (indoor hall, wooden court, keys and hoops), baseball_stadium (dirt diamond, bases, mound), or plain stadium. racetrack is a banked oval with a pit lane and grandstand. '
-      + 'Leisure: waterpark (terraced pools, tower, slides), amusement_park (ferris wheel, carousel, stalls). '
-      + 'Retail: target_store, walmart, starbucks or a generic store - a big box with a glass front, branded parapet, pylon sign and a car park. These are the SILHOUETTE and the brand colours, not a licensed replica; say so if he expects an exact copy of a real shop. '
-      + 'kind: small, medium, large, mansion. palette is the STYLE and carries the shape as well as the colours - stone, oak and quartz are traditional with pitched stepped roofs; modern is white concrete with a flat roof and curtain-wall glass; futuristic is grey and cyan with tinted glass; treehouse stands on a trunk with a ladder up; cave is cut into a hillside. floors 1 to 4. '
-      + 'clear wipes the footprint of a build and lays grass back. It is RELATIVE like everything else, so he has to be standing where he stood when he built the thing he wants gone - tell him that rather than clearing blind. '
-      + 'FROM A PHOTOGRAPH: if he attaches a picture of a build he wants something like, LOOK AT IT and pass what you can actually see in `overrides` - wall, trim, floor, roof_block and window as Minecraft block ids, roof as flat, pitched or stepped, glass as 0-100 for how much of the wall is window, and width and depth in blocks. Pick the nearest named palette as the base and let the overrides do the rest. '
-      + 'Be honest about what that gets him: the same shape language, colours and proportions, NOT a copy. A hand-built showcase mansion with dormers, balustrades and gardens is not reproducible from /fill boxes, and promising ninety percent would be a lie. Say it will be in the spirit of the picture.'
-      + 'CHANGING WHAT IS ALREADY THERE USES add, NEVER build. "Add stairs", "give it a basement", "put a porch on it", "make me a garden" - those are action add with a feature, which places only that feature and clears nothing. Calling build again does not extend a building: it lays a whole new one where he is standing now and its clearing pass eats the walls off the last one, which is what left him with doubled shells and empty stone platforms. '
-      + 'It knows where he is. `where` asks the game directly with its own F3+C debug shortcut and gets back exact coordinates, facing and dimension - it does not read the screen or guess. A build records the coordinates it went up at, so "add a porch" afterwards is anchored to the BUILDING rather than to wherever he happens to be standing, and works from across the world. If a result says it was not anchored, say so rather than pretending it landed correctly. '
-      + 'For "build it here" or "put a pool behind the house", call where first and say what you found - "you are at -61, 81, 42 facing north" - so he can tell you if you have the wrong spot before anything is placed. '
-      + 'If build refuses with needs_confirm, do not retry with confirm to make the error go away. It means a building went up moments ago; either he wanted add, or he needs to walk well clear first. Ask him which. '
-      + 'After a build the result carries five suggestions for what to add next. Read them out and ask which he wants. Never start building one unprompted.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: { type: 'string', enum: ['build', 'add', 'clear', 'where', 'plan', 'status'],
-                  description: 'build: a NEW building. add: change the one already there. clear: wipe that footprint. where: read his exact coordinates and facing out of the game. plan: list the commands without sending. status: is the game reachable.' },
-        feature: { type: 'string',
-                   enum: ['stairs', 'interior', 'basement', 'terrace', 'garden', 'porch'],
-                   description: 'For add.' },
-        confirm: { type: 'boolean', description: 'Only for a deliberate SECOND building near a recent one.' },
-        structure: { type: 'string',
-                     enum: ['house', 'beach_house', 'stadium', 'theater',
-                            'waterpark', 'amusement_park',
-                            'football_stadium', 'soccer_stadium',
-                            'basketball_arena', 'baseball_stadium', 'racetrack',
-                            'target_store', 'walmart', 'starbucks', 'store'],
-                     description: 'What to build. house is the default and covers mansions, treehouses and cave bases through palette.' },
-        kind: { type: 'string', enum: ['small', 'medium', 'large', 'mansion'],
-                description: 'Size. Only meaningful for a house.' },
-        palette: { type: 'string',
-                   enum: ['stone', 'oak', 'quartz', 'modern', 'futuristic', 'treehouse', 'cave'] },
-        floors: { type: 'number', description: '1 to 4. Two by default.' },
-        overrides: {
-          type: 'object',
-          description: 'What you saw in an attached photograph. All optional.',
-          properties: {
-            wall: { type: 'string' }, trim: { type: 'string' },
-            floor: { type: 'string' }, roof_block: { type: 'string' },
-            window: { type: 'string' }, light: { type: 'string' },
-            roof: { type: 'string', enum: ['flat', 'pitched', 'stepped', 'none'] },
-            glass: { type: 'number', description: '0-100, how much of the wall is window.' },
-            width: { type: 'number' }, depth: { type: 'number' }
-          }
-        }
-      },
-      required: ['action']
-    }
-  };
 
-  const LESSONS_TOOL = {
-    name: 'lessons',
-    description:
-      'Teach a language, and remember what they have learned. You do the teaching; this keeps the schedule. start begins a sitting and tells you what is due for review and how many new items to introduce. add stores what you just taught so it can be scheduled - ALWAYS call it after introducing new words, or none of it is remembered. record scores one answer and is what makes the whole thing work - call it for EVERY item the moment you know how they did, including when they simply tell you. An item never recorded is never scheduled. progress reports what they know. Works for any language: Spanish, Japanese, German, ASL - the machinery does not care which.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['start', 'add', 'record', 'progress', 'due', 'forget', 'asl'],
-          description: 'start: begin a lesson. add: store new items. record: score an answer. progress: what they know. asl: what to know before teaching sign language.'
-        },
-        language: { type: 'string', description: 'Which language, e.g. "spanish".' },
-        items: {
-          type: 'array',
-          description: 'For add: the things you just taught. Each needs term and meaning; note is for a usage hint or, for a sign, how the hand actually moves.',
-          items: {
-            type: 'object',
-            properties: {
-              term: { type: 'string' },
-              meaning: { type: 'string' },
-              note: { type: 'string' }
-            }
-          }
-        },
-        id: { type: 'number', description: 'For record: the item id from a lesson listing. If you do not have it, pass term and language instead rather than guessing a number.' },
-        correct: { type: 'boolean', description: 'For record: did they get it right.' },
-        grade: { type: 'number', description: 'For record, optionally 0-5. 5 is instant and certain, 3 is correct but laboured, below 3 is a miss.' },
-        term: { type: 'string', description: 'For record or forget: the exact term, e.g. "rapido". The simplest way to score an answer when you do not have the id.' }
-      },
-      required: ['action']
-    }
-  };
 
-  const TRANSLATE_TOOL = {
-    name: 'translate',
-    description:
-      'Read something and translate it. screen captures what is on their display and reads it through the vision model; clipboard takes whatever they last copied. Use this the moment they ask you to translate something they are looking at, rather than asking them to type it out. Give BOTH the original and the translation - they are usually trying to learn, not only to understand.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        source: {
-          type: 'string',
-          enum: ['screen', 'clipboard'],
-          description: 'Where the text is.'
-        },
-        to: { type: 'string', description: 'Target language. Defaults to English.' }
-      },
-      required: ['source']
-    }
-  };
 
-  const VISION_TOOL = {
-    name: 'see_screen',
-    description:
-      'Look at what is currently on the user screen and answer a question about it. Use this whenever they refer to something visible - "what does this error say", "what am I looking at", "read this for me", "is this right" - rather than asking them to type it out. Captures the whole desktop at the moment you call it.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        question: {
-          type: 'string',
-          description: 'What you want to know about the screen. Be specific: "what does the error dialog say" reads better than "describe this".'
-        }
-      },
-      required: ['question']
-    }
-  };
 
   /* The main model cannot see. So this is a second call, to a vision model,
      whose answer becomes the tool result the main model then reasons over.
@@ -1296,51 +939,7 @@
     }
   }
 
-  const MEMORY_TOOL = {
-    name: 'reminders',
-    description:
-      'Set, list and cancel reminders, and search what you have been told about the user. Reminders are held outside the browser, so they survive a reload or a restart and still fire if the dashboard was closed when they came due. Use recall when you need something you were told before but is not in front of you.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['set', 'list', 'cancel', 'recall'],
-          description: 'set: create a reminder. list: what is pending. cancel: remove one. recall: search your memory of the user.'
-        },
-        text: {
-          type: 'string',
-          description: 'For set: what to remind them of. For cancel: the id number or a distinctive phrase. For recall: what you are looking for.'
-        },
-        when: {
-          type: 'string',
-          description: 'For set only. "in 20 minutes", "at 7pm", "tomorrow at 9".'
-        }
-      },
-      required: ['action']
-    }
-  };
 
-  const GOOGLE_TOOL = {
-    name: 'google',
-    description:
-      'Read the user calendar and inbox. Use agenda for what is coming up, mail for unread messages, and search_mail with a Gmail query for anything specific. Read-only: you cannot send, reply, delete or create anything. When they ask about their day, their schedule, whether they are free, or what has come in, use this rather than guessing.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['agenda', 'mail', 'search_mail'],
-          description: 'agenda: upcoming calendar events. mail: unread messages. search_mail: a Gmail search.'
-        },
-        query: {
-          type: 'string',
-          description: 'For agenda: "today", "tomorrow", "this week", or "3 days". For search_mail: Gmail syntax such as "from:bank newer_than:7d".'
-        }
-      },
-      required: ['action']
-    }
-  };
 
   async function googleCmd(action, query) {
     if (!hasGoogle) return 'FAILED - the Google bridge is unavailable in this build.';
@@ -1359,55 +958,9 @@
     }
   }
 
-  const SPOTIFY_TOOL = {
-    name: 'spotify',
-    description:
-      'Control Spotify properly: start a named track, album, artist or playlist, pause, skip, set an exact volume, or report what is actually playing. Prefer this over the media keys whenever the user names something to play or asks what is on — the media keys are blind toggles and cannot tell you anything. Requires Spotify Premium to start playback.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: ['play_track', 'play_album', 'play_artist', 'play_playlist',
-                 'pause', 'resume', 'next', 'previous', 'current', 'volume', 'devices'],
-          description: 'What to do. Use current to find out what is playing.'
-        },
-        query: { type: 'string', description: 'What to search for. Required for the play_* actions.' },
-        value: { type: 'number', description: 'Volume percent, 0 to 100. Only for volume.' }
-      },
-      required: ['action']
-    }
-  };
 
   function toolList() {
-    const tools = CLIENT_TOOLS.slice();
-    if (hasTasks && J.tasks && !J.tasks.background()) tools.push(J.tasks.tool);
-    if (hasSpotify) tools.push(SPOTIFY_TOOL);
-    if (hasKnowledge) tools.push(KNOWLEDGE_TOOL);
-    if (hasGoogle) tools.push(GOOGLE_TOOL);
-    if (hasMemory) tools.push(MEMORY_TOOL);
-    if (hasVision && J.settings.visionModel) tools.push(VISION_TOOL);
-    if (hasRecall) tools.push(RECALL_TOOL);
-    if (hasFiles) tools.push(FILES_TOOL);
-    if (hasFiles && J.settings.visionModel) tools.push(PREVIEW_TOOL);
-    if (hasVideo) tools.push(VIDEO_TOOL);
-    if (hasJobs) tools.push(JOBS_TOOL);
-    if (hasHunt) tools.push(HUNT_TOOL);
-    if (hasMinecraft) tools.push(MINECRAFT_TOOL);
-    if (hasLessons) tools.push(LESSONS_TOOL);
-    if (hasVision || hasDesktop) tools.push(TRANSLATE_TOOL);
-    if (hasDesktop) tools.push(DESKTOP_TOOL);
-
-    /* The Anthropic path prefers the server-side search below, which is
-       stronger. Everywhere else, the local proxy is what makes search exist. */
-    if (J.settings.webSearch && localSearch && usingOpenAI()) {
-      tools.push.apply(tools, WEB_TOOLS);
-    }
-    if (J.settings.webSearch && !usingOpenAI()) {
-      tools.push({ type: 'web_search_20260209', name: 'web_search', max_uses: 8 });
-      tools.push({ type: 'web_fetch_20260209',  name: 'web_fetch',  max_uses: 5 });
-    }
-    return tools;
+    return CLIENT_TOOLS.concat(J.skills ? J.skills.tools() : []);
   }
 
   /* -------------------------------------------------- client tool runner */
@@ -1847,49 +1400,16 @@
     timers.push({ id, at, label });
   }
 
+  const CORE_TOOL_NAMES = new Set(CLIENT_TOOLS.map(tool => tool.name));
   async function execClientTool(name, input) {
     if (!J.permissions) return 'FAILED - Permission broker is unavailable.';
-    return J.permissions.dispatch(name, input, () => executeAuthorizedTool(name, input));
+    if (CORE_TOOL_NAMES.has(name)) return J.permissions.dispatch(name, input, () => executeAuthorizedTool(name, input));
+    return J.skills ? J.skills.execute(name, input, {userText:lastUserText}) : 'FAILED - Skill registry unavailable.';
   }
 
   async function executeAuthorizedTool(name, input) {
+    if (!CORE_TOOL_NAMES.has(name)) return J.skills ? J.skills.executeAuthorized(name, input, {userText:lastUserText}) : 'FAILED - Skill registry unavailable.';
     try {
-      if (name === 'tasks' && J.tasks) return await J.tasks.modelCommand(input, lastUserText);
-      if (name === 'spotify') return await spotify(input.action, input.query, input.value);
-      if (name === 'lookup')  return await runLookup(input.source, input.query);
-      if (name === 'google')  return await googleCmd(input.action, input.query);
-      if (name === 'reminders') return await memoryCmd(input.action, input.text, input.when);
-      if (name === 'see_screen') return await seeScreen(input.question);
-      if (name === 'recall') {
-        if (input.action === 'status') return await recallCmd('status');
-        if (input.action === 'index') return await recallCmd('index', null, input.folder);
-        return await recallCmd(input.action, input.query);
-      }
-      if (name === 'video') return await videoCmd(input);
-      if (name === 'jobs') return await jobsCmd(input);
-      if (name === 'job_hunt') return await huntCmd(input);
-      if (name === 'minecraft') return await simpleCmd('api/minecraft/command', input, 'minecraft');
-      if (name === 'lessons') return await lessonsCmd(input);
-      if (name === 'translate') return await translateCmd(input.source, input.to);
-      if (name === 'see_preview') {
-        return await seePreview(input.project, input.question, input.path,
-                                input.width, input.height);
-      }
-      if (name === 'files') {
-        // guardedWrite handles its own preview refresh, because it is the only
-        // one that knows whether the write actually happened
-        if (input.action === 'write') return await guardedWrite(input);
-
-        const out = await filesCmd(input);
-        if (input.action === 'scaffold' && !/^FAILED/.test(out)) {
-          J.emit('preview', { project: (input.name || '').trim().replace(/[^A-Za-z0-9 _-]/g,'').replace(/\s+/g,'-') });
-        }
-        return out;
-      }
-      if (name === 'desktop') return await desktopCmd(input.action, input.text);
-      if (name === 'web_search') return await runSearch(input.query);
-      if (name === 'web_fetch')  return await runFetch(input.url);
-
       if (name === 'remember' && hasMemory) return await memoryCmd('remember', input.fact);
       if (name === 'forget' && hasMemory) return await memoryCmd('forget', input.match);
 
@@ -2257,6 +1777,7 @@
       const res = await fetch('api/health', { method: 'GET' });
       if (res.ok) {
         const info = await res.json().catch(() => ({}));
+        if (J.skills) { J.skills.setCapabilities(info); try { await J.skills.load(); } catch (e) { /* Chat remains available; integrations fail closed. */ } }
         if (info && info.search) {
           localSearch = true;
           J.log('Local search proxy available — web lookups enabled', 'ok', 'net');
@@ -2715,6 +2236,9 @@
       max_tokens: 4000,
       stream: true
     };
+
+    // A route already declared tool-less must not receive unsupported schemas.
+    if (activeRoute && activeRoute.tools === false) delete body.tools;
 
     if (control) {
       body.messages[0] = { role: 'system', content: control };
@@ -3370,7 +2894,7 @@
 
     try {
       if (J.agent && !(J.tasks && J.tasks.schedulingIntent(text) && !options.background)) {
-        missionTurn = await J.agent.prepare(text, missionControl, toolList().filter(t => t.name).map(t => t.name + ': ' + String(t.description || '').slice(0, 180)), !(turnModel && activeRoute && activeRoute.tools === false));
+        missionTurn = await J.agent.prepare(text, missionControl, toolList().filter(t => t.name).map(t => t.name + ': ' + String(t.description || '').slice(0, 180)).concat(J.skills ? [J.skills.summary()] : []), !(turnModel && activeRoute && activeRoute.tools === false));
       }
       for (;;) {
         if (controller.signal.aborted) throw new DOMException('Stopped', 'AbortError');
@@ -3891,6 +3415,7 @@
   }
 
   J.brain = {
+    skillRuntime: Object.freeze({spotify,runLookup,googleCmd,memoryCmd,seeScreen,recallCmd,videoCmd,jobsCmd,huntCmd,simpleCmd,lessonsCmd,translateCmd,seePreview,guardedWrite,filesCmd,desktopCmd,runSearch,runFetch}),
     send, abort, ready, verify, listModels, resumePermissionTool: executeAuthorizedTool, isBusy: () => busy,
     resolveTransport, getTransport: () => transport,
     clearConversation, exportTranscript,

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "video",
+  "name": "Video",
+  "version": "1.0.0",
+  "description": "Make a narrated 1080p video from stock footage, and prepare it for YouTube. render takes a title and a list of beats - each beat is a stock search query plus the line to say over it, and one beat becomes one shot of about five seconds. Write the narration yourself: it should say something worth hearing, and it must describe what the footage will actually show, because the search query is what fetches the picture. list shows what has been made. review returns one video with its drafted title, description and tags. publish_packet opens YouTube Studio and reports where the file is. IT NEVER UPLOADS. Say it is ready for him to review and publish - never say it was posted, because it was not. Footage is real stock, so this suits explainers, montages and documentary; it cannot make animation or characters, and you should say so rather than trying.",
+  "tools": [
+    {
+      "name": "video",
+      "description": "Make a narrated 1080p video from stock footage, and prepare it for YouTube. render takes a title and a list of beats - each beat is a stock search query plus the line to say over it, and one beat becomes one shot of about five seconds. Write the narration yourself: it should say something worth hearing, and it must describe what the footage will actually show, because the search query is what fetches the picture. list shows what has been made. review returns one video with its drafted title, description and tags. publish_packet opens YouTube Studio and reports where the file is. IT NEVER UPLOADS. Say it is ready for him to review and publish - never say it was posted, because it was not. Footage is real stock, so this suits explainers, montages and documentary; it cannot make animation or characters, and you should say so rather than trying.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "render",
+              "list",
+              "review",
+              "publish_packet"
+            ],
+            "description": "render: make one. list: what exists. review: read the draft. publish_packet: open Studio, stopping before publish."
+          },
+          "title": {
+            "type": "string",
+            "description": "For render: the video title."
+          },
+          "beats": {
+            "type": "array",
+            "description": "For render: the shots, in order. Three to six is a good video.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "Stock footage search, e.g. \"espresso machine barista\". This is what fetches the picture, so keep it concrete and literal."
+                },
+                "say": {
+                  "type": "string",
+                  "description": "The narration spoken over this shot. The field is named \"say\" - not \"line\", not \"text\"."
+                }
+              },
+              "required": [
+                "query",
+                "say"
+              ]
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "YouTube tags you choose - 8 to 15 of them, the words someone would actually search for. Write these yourself; leaving them out falls back to a crude word-frequency guess that is not worth shipping.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "The YouTube description in your own words. Chapters and footage credits are appended automatically, so do not write those."
+          },
+          "id": {
+            "type": "string",
+            "description": "Which video, for review and publish_packet."
+          },
+          "limit": {
+            "type": "number",
+            "description": "For list."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "video"
+  },
+  "permissions": {
+    "video": {
+      "render": "CREATE_FILE",
+      "list": "READ_STATE",
+      "review": "READ_STATE",
+      "publish_packet": "READ_STATE"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "video"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

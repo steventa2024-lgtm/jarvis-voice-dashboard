@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "knowledge",
+  "name": "Live Data",
+  "version": "1.0.0",
+  "description": "Query a live data source directly. Faster and far more accurate than web_search for the things it covers, so prefer it when one fits: exchange rates, crypto prices, an encyclopaedia summary, the current headlines, what is on television, or daylight hours. Use web_search only for questions none of these sources answer.",
+  "tools": [
+    {
+      "name": "lookup",
+      "description": "Query a live data source directly. Faster and far more accurate than web_search for the things it covers, so prefer it when one fits: exchange rates, crypto prices, an encyclopaedia summary, the current headlines, what is on television, or daylight hours. Use web_search only for questions none of these sources answer.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "stocks",
+              "currency",
+              "crypto",
+              "wikipedia",
+              "news",
+              "tech_news",
+              "tv_tonight",
+              "daylight",
+              "sports"
+            ],
+            "description": "stocks: live quotes for a company, ticker or index - pass a name like \"tesla and nvidia\", a ticker, or leave the query empty for the major indices. currency: exchange rates from the ECB. crypto: coin prices. wikipedia: encyclopaedia summary. news: world headlines from RSS. tech_news: Hacker News front page. tv_tonight: TV schedule. daylight: sunrise and sunset. sports: live scores and fixtures from ESPN — pass a team (\"braves\"), a league (\"nba\"), or nothing for what is on today. USE THIS for any question about a game, a score or whether a team is playing; it answers in one call with the score, the status, the channel and the venue, which is what searching the web for it repeatedly fails to produce."
+          },
+          "query": {
+            "type": "string",
+            "description": "What to ask for. currency: \"100 usd to eur\". crypto: \"bitcoin ethereum\". wikipedia: the article subject. daylight: \"lat,lon\" taken from the device context. news and tech_news need nothing."
+          }
+        },
+        "required": [
+          "source"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "knowledge"
+  },
+  "permissions": {
+    "lookup": {
+      "*": "BROWSER_READ"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "knowledge"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

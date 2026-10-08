@@ -157,6 +157,13 @@ class Broker(unittest.TestCase):
             if match:
                 for name in re.findall(r"'([^']+)'",match[1]):
                     self.assertIn(name,MAP[tool],tool+':'+name); found+=1
+        # Integration schemas moved intact to validated manifests in Phase 4.
+        for manifest_path in (Path(__file__).resolve().parent.parent/'J.A.R.V.I.S. Dashboard - Copy/skills').glob('*/skill.json'):
+            manifest=json.loads(manifest_path.read_text(encoding='utf8'))
+            for tool in manifest['tools']:
+                if tool['name'] not in MAP or tool['name'] in ('tasks',): continue
+                for name in tool['input_schema']['properties'].get('action',{}).get('enum',[]):
+                    self.assertIn(name,MAP[tool['name']],tool['name']+':'+name);found+=1
         self.assertGreater(found,80)
 
 if __name__=='__main__': unittest.main(verbosity=2)

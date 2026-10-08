@@ -1,0 +1,6 @@
+/* Compact transcript surface; no reactor or composer layout rules. */
+.skills-surface { width: 100%; min-width: 0; max-height: 230px; overflow-y: auto; box-sizing: border-box; padding: 12px; border: 1px solid var(--line, rgba(53,214,255,.18)); }
+.skills-surface p { margin: 6px 0; font-size: 12px; overflow-wrap: anywhere; }
+.skill-card { padding: 10px 0; border-top: 1px solid var(--line, rgba(53,214,255,.18)); }
+#skillsSurface { flex: 0 0 auto; min-width: 0; max-width: 82ch; }
+#skillsSurface[hidden] { display: none; }

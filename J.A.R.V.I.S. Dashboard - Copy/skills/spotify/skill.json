@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "spotify",
+  "name": "Spotify",
+  "version": "1.0.0",
+  "description": "Control Spotify properly: start a named track, album, artist or playlist, pause, skip, set an exact volume, or report what is actually playing. Prefer this over the media keys whenever the user names something to play or asks what is on — the media keys are blind toggles and cannot tell you anything. Requires Spotify Premium to start playback.",
+  "tools": [
+    {
+      "name": "spotify",
+      "description": "Control Spotify properly: start a named track, album, artist or playlist, pause, skip, set an exact volume, or report what is actually playing. Prefer this over the media keys whenever the user names something to play or asks what is on — the media keys are blind toggles and cannot tell you anything. Requires Spotify Premium to start playback.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "play_track",
+              "play_album",
+              "play_artist",
+              "play_playlist",
+              "pause",
+              "resume",
+              "next",
+              "previous",
+              "current",
+              "volume",
+              "devices"
+            ],
+            "description": "What to do. Use current to find out what is playing."
+          },
+          "query": {
+            "type": "string",
+            "description": "What to search for. Required for the play_* actions."
+          },
+          "value": {
+            "type": "number",
+            "description": "Volume percent, 0 to 100. Only for volume."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "spotify"
+  },
+  "permissions": {
+    "spotify": {
+      "play_track": "CONTROL_SPOTIFY",
+      "play_album": "CONTROL_SPOTIFY",
+      "play_artist": "CONTROL_SPOTIFY",
+      "play_playlist": "CONTROL_SPOTIFY",
+      "pause": "CONTROL_SPOTIFY",
+      "resume": "CONTROL_SPOTIFY",
+      "next": "CONTROL_SPOTIFY",
+      "previous": "CONTROL_SPOTIFY",
+      "current": "READ_SPOTIFY",
+      "volume": "CONTROL_SPOTIFY",
+      "devices": "READ_SPOTIFY"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "spotify"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

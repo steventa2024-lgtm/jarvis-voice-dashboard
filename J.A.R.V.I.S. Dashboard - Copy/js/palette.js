@@ -30,6 +30,7 @@
     const onOff = v => (v ? 'on' : 'off');
 
     return [
+      { ico: '◇', name: 'Skills', hint: 'capabilities, availability and routing', run: () => { if (J.skills) J.skills.show(); } },
       { ico: '◇', name: 'Permissions', hint: 'grants, approvals and audit', run: () => { if (J.permissions) J.permissions.show(); } },
       { ico: '◷', name: 'Scheduled tasks', hint: 'automations, schedules and run history', run: () => { if (J.tasks) J.tasks.show(); } },
       { ico: '◉', name: 'Toggle voice input',

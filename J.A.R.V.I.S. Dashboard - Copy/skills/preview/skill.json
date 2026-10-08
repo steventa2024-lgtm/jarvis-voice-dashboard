@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "preview",
+  "name": "Preview",
+  "version": "1.0.0",
+  "description": "Look at a page you built, as a browser actually draws it. Renders the project page on its own and has a vision model report what is there: layout, spacing, alignment, colour, anything cut off, overlapping or broken. Use it after building or changing anything visual and BEFORE telling the user it is done — it is the only way you can check your own work, and believing the code looks right is not the same as having looked. Then fix what it found and look again.",
+  "tools": [
+    {
+      "name": "see_preview",
+      "description": "Look at a page you built, as a browser actually draws it. Renders the project page on its own and has a vision model report what is there: layout, spacing, alignment, colour, anything cut off, overlapping or broken. Use it after building or changing anything visual and BEFORE telling the user it is done — it is the only way you can check your own work, and believing the code looks right is not the same as having looked. Then fix what it found and look again.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string",
+            "description": "Which project to look at."
+          },
+          "question": {
+            "type": "string",
+            "description": "What you want to know. Be specific: \"is the header aligned with the cards, and is any text cut off\" reads far better than \"describe this\"."
+          },
+          "path": {
+            "type": "string",
+            "description": "Which page, relative to the project. Defaults to index.html."
+          },
+          "width": {
+            "type": "number",
+            "description": "Viewport width in pixels. Defaults to 1280. Use 390 to see it as a phone would."
+          },
+          "height": {
+            "type": "number",
+            "description": "Viewport height in pixels. Defaults to 900. Raise it to take in more of a long page."
+          }
+        },
+        "required": [
+          "project",
+          "question"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "preview"
+  },
+  "permissions": {
+    "see_preview": {
+      "*": "READ_PROJECT"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "files"
+    ],
+    "mode": "all",
+    "client_requirements": [
+      "vision_model"
+    ]
+  }
+}

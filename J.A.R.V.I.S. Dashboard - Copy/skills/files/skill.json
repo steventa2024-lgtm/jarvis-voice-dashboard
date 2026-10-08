@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "id": "files",
+  "name": "Files",
+  "version": "1.0.0",
+  "description": "Work with files and build projects. find locates files, read returns their text, transcribe turns speech into text, media converts with ffmpeg. scaffold creates a project, write creates or replaces a file inside one, run executes it and hands you back everything it printed, list_project shows what is there, history lists past changes and revert undoes them. WRITE FILES RATHER THAN PRINTING CODE AT THE USER — they asked for a thing built, not for something to copy and paste. Every write is snapshotted with git, so any change can be undone, and a write that replaces existing work may be shown to the user for approval before it lands. Reading is limited to configured folders, writing only happens inside the projects folder, and you cannot delete anything.",
+  "tools": [
+    {
+      "name": "files",
+      "description": "Work with files and build projects. find locates files, read returns their text, transcribe turns speech into text, media converts with ffmpeg. scaffold creates a project, write creates or replaces a file inside one, run executes it and hands you back everything it printed, list_project shows what is there, history lists past changes and revert undoes them. WRITE FILES RATHER THAN PRINTING CODE AT THE USER — they asked for a thing built, not for something to copy and paste. Every write is snapshotted with git, so any change can be undone, and a write that replaces existing work may be shown to the user for approval before it lands. Reading is limited to configured folders, writing only happens inside the projects folder, and you cannot delete anything.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "find",
+              "read",
+              "transcribe",
+              "media",
+              "scaffold",
+              "capabilities",
+              "write",
+              "run",
+              "join",
+              "list_project",
+              "history",
+              "revert"
+            ],
+            "description": "capabilities tells you which folders are readable, which runners exist and whether ffmpeg is present."
+          },
+          "query": {
+            "type": "string",
+            "description": "For find: words from the filename."
+          },
+          "path": {
+            "type": "string",
+            "description": "For transcribe and media: an absolute path. For write: a path RELATIVE to the project, such as \"index.html\" or \"src/app.js\" — never a drive letter or a Desktop path, since files only ever land inside the project folder. For read: either an absolute path, or a relative one alongside the project argument to read a file you built."
+          },
+          "media_action": {
+            "type": "string",
+            "description": "For media, one named job: to_mp3, to_wav, to_mp4, to_gif, compress, audio_only, mute, trim, thumbnail, half_speed, double_speed, or one of the shaping jobs — vertical (9:16), square (1:1), web (1280 wide, streaming-ready), silent_web (the same with the audio stripped, for a muted hero background)."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For join only: absolute paths to two or more clips, in the order they should play."
+          },
+          "start": {
+            "type": "string",
+            "description": "For trim or thumbnail: a timestamp such as 00:01:30."
+          },
+          "duration": {
+            "type": "string",
+            "description": "For trim: how long to keep."
+          },
+          "name": {
+            "type": "string",
+            "description": "For scaffold: the project name."
+          },
+          "kind": {
+            "type": "string",
+            "description": "For scaffold: web (one designed landing page), site (a four-page static site), mvp (front end plus a Python JSON API and a SQLite database), python, or node. web, site and mvp all start from a shared design foundation — tokens, a type scale, responsive grids, components and motion — so build ON that rather than writing CSS from nothing. Call capabilities if you are unsure what exists."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For scaffold: setup steps to run. Allowed: git_init, npm_init, npm_install, pip_install, venv."
+          },
+          "project": {
+            "type": "string",
+            "description": "For write, run, list_project, history and revert: which project. Also for read, when you want a file inside a project rather than an absolute path."
+          },
+          "content": {
+            "type": "string",
+            "description": "For write: the complete new contents of the file."
+          },
+          "why": {
+            "type": "string",
+            "description": "For write: a short note describing the change, used as the snapshot message."
+          },
+          "steps_back": {
+            "type": "number",
+            "description": "For revert: how many changes to undo. Defaults to 1."
+          },
+          "what": {
+            "type": "string",
+            "description": "For run: python, node, npm_test or pytest. Nothing else can be run and there is no way to pass a command line."
+          },
+          "entry": {
+            "type": "string",
+            "description": "For run with python or node: which file, relative to the project. Omit it and the obvious one is used — main.py, index.js and so on."
+          },
+          "timeout": {
+            "type": "number",
+            "description": "For run: seconds to wait before stopping it. Defaults to 90, capped at 180."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "files"
+  },
+  "permissions": {
+    "files": {
+      "find": "READ_FILE",
+      "read": "READ_FILE",
+      "transcribe": "READ_FILE",
+      "media": "CREATE_FILE",
+      "scaffold": "CREATE_FILE",
+      "capabilities": "READ_PROJECT",
+      "write": "WRITE_FILE",
+      "run": "EXECUTE_CODE",
+      "join": "CREATE_FILE",
+      "list_project": "READ_PROJECT",
+      "history": "READ_PROJECT",
+      "revert": "MODIFY_PROJECT"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "files"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

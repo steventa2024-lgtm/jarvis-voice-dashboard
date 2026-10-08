@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "lessons",
+  "name": "Lessons",
+  "version": "1.0.0",
+  "description": "Teach a language, and remember what they have learned. You do the teaching; this keeps the schedule. start begins a sitting and tells you what is due for review and how many new items to introduce. add stores what you just taught so it can be scheduled - ALWAYS call it after introducing new words, or none of it is remembered. record scores one answer and is what makes the whole thing work - call it for EVERY item the moment you know how they did, including when they simply tell you. An item never recorded is never scheduled. progress reports what they know. Works for any language: Spanish, Japanese, German, ASL - the machinery does not care which.",
+  "tools": [
+    {
+      "name": "lessons",
+      "description": "Teach a language, and remember what they have learned. You do the teaching; this keeps the schedule. start begins a sitting and tells you what is due for review and how many new items to introduce. add stores what you just taught so it can be scheduled - ALWAYS call it after introducing new words, or none of it is remembered. record scores one answer and is what makes the whole thing work - call it for EVERY item the moment you know how they did, including when they simply tell you. An item never recorded is never scheduled. progress reports what they know. Works for any language: Spanish, Japanese, German, ASL - the machinery does not care which.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "start",
+              "add",
+              "record",
+              "progress",
+              "due",
+              "forget",
+              "asl"
+            ],
+            "description": "start: begin a lesson. add: store new items. record: score an answer. progress: what they know. asl: what to know before teaching sign language."
+          },
+          "language": {
+            "type": "string",
+            "description": "Which language, e.g. \"spanish\"."
+          },
+          "items": {
+            "type": "array",
+            "description": "For add: the things you just taught. Each needs term and meaning; note is for a usage hint or, for a sign, how the hand actually moves.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "term": {
+                  "type": "string"
+                },
+                "meaning": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "id": {
+            "type": "number",
+            "description": "For record: the item id from a lesson listing. If you do not have it, pass term and language instead rather than guessing a number."
+          },
+          "correct": {
+            "type": "boolean",
+            "description": "For record: did they get it right."
+          },
+          "grade": {
+            "type": "number",
+            "description": "For record, optionally 0-5. 5 is instant and certain, 3 is correct but laboured, below 3 is a miss."
+          },
+          "term": {
+            "type": "string",
+            "description": "For record or forget: the exact term, e.g. \"rapido\". The simplest way to score an answer when you do not have the id."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "lessons"
+  },
+  "permissions": {
+    "lessons": {
+      "start": "MODIFY_STATE",
+      "add": "MODIFY_STATE",
+      "record": "MODIFY_STATE",
+      "progress": "READ_STATE",
+      "due": "READ_STATE",
+      "forget": "CLEAR_DATA",
+      "asl": "MODIFY_STATE"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "lessons"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "recall",
+  "name": "Recall",
+  "version": "1.0.0",
+  "description": "Search the user own documents and your past conversations with them. This is their private material - notes, contracts, manuals, code - indexed on this machine. Use it BEFORE web search whenever a question sounds like it concerns something of theirs, and use search_chats when they refer to something discussed before that you cannot see.",
+  "tools": [
+    {
+      "name": "recall",
+      "description": "Search the user own documents and your past conversations with them. This is their private material - notes, contracts, manuals, code - indexed on this machine. Use it BEFORE web search whenever a question sounds like it concerns something of theirs, and use search_chats when they refer to something discussed before that you cannot see.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "search",
+              "search_chats",
+              "index",
+              "status"
+            ],
+            "description": "search: their documents. search_chats: earlier conversations. index: add a folder. status: what is indexed."
+          },
+          "query": {
+            "type": "string",
+            "description": "What to look for, phrased as a question or description rather than keywords."
+          },
+          "folder": {
+            "type": "string",
+            "description": "For index only: the folder to read."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "recall"
+  },
+  "permissions": {
+    "recall": {
+      "search": "READ_MEMORY",
+      "search_chats": "READ_MEMORY",
+      "index": "MODIFY_MEMORY",
+      "status": "READ_MEMORY"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "recall"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

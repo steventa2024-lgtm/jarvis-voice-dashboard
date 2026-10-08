@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "vision",
+  "name": "Screen Vision",
+  "version": "1.0.0",
+  "description": "Look at what is currently on the user screen and answer a question about it. Use this whenever they refer to something visible - \"what does this error say\", \"what am I looking at\", \"read this for me\", \"is this right\" - rather than asking them to type it out. Captures the whole desktop at the moment you call it.",
+  "tools": [
+    {
+      "name": "see_screen",
+      "description": "Look at what is currently on the user screen and answer a question about it. Use this whenever they refer to something visible - \"what does this error say\", \"what am I looking at\", \"read this for me\", \"is this right\" - rather than asking them to type it out. Captures the whole desktop at the moment you call it.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "What you want to know about the screen. Be specific: \"what does the error dialog say\" reads better than \"describe this\"."
+          }
+        },
+        "required": [
+          "question"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "vision"
+  },
+  "permissions": {
+    "see_screen": {
+      "*": "READ_SCREEN"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "vision"
+    ],
+    "mode": "all",
+    "client_requirements": [
+      "vision_model"
+    ]
+  }
+}

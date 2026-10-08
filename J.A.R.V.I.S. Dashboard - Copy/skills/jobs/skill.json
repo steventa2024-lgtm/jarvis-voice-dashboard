@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "jobs",
+  "name": "Jobs",
+  "version": "1.0.0",
+  "description": "Zero's job hunt. list shows listings already found, best match first, with a 0-1 score against his profile. scan checks the watched boards for new ones. shortlist narrows to those worth reading closely. analyse has a local model read one description against his resume and report matches, gaps and outright blockers. tailor drafts a resume and covering letter for one listing into ~/JarvisProjects/applications and reports any claim it made that his master resume does not support. prepare opens the application form in a real browser, fills the plain fields, and STOPS - it never submits, and you must never tell him it did. decide records interested or passed. The watched boards are Greenhouse, Ashby, Lever and Workable, which are engineering and corporate ATSs. They do not carry hospitality, retail or hourly work and never will, so for anything of that kind - barista, cafe, food service, warehouse, front of house - use job_hunt instead, which searches LinkedIn, Indeed, Google Jobs and ZipRecruiter. This tool is for a named company's own board; job_hunt is for an actual job search.",
+  "tools": [
+    {
+      "name": "jobs",
+      "description": "Zero's job hunt. list shows listings already found, best match first, with a 0-1 score against his profile. scan checks the watched boards for new ones. shortlist narrows to those worth reading closely. analyse has a local model read one description against his resume and report matches, gaps and outright blockers. tailor drafts a resume and covering letter for one listing into ~/JarvisProjects/applications and reports any claim it made that his master resume does not support. prepare opens the application form in a real browser, fills the plain fields, and STOPS - it never submits, and you must never tell him it did. decide records interested or passed. The watched boards are Greenhouse, Ashby, Lever and Workable, which are engineering and corporate ATSs. They do not carry hospitality, retail or hourly work and never will, so for anything of that kind - barista, cafe, food service, warehouse, front of house - use job_hunt instead, which searches LinkedIn, Indeed, Google Jobs and ZipRecruiter. This tool is for a named company's own board; job_hunt is for an actual job search.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "list",
+              "scan",
+              "shortlist",
+              "analyse",
+              "tailor",
+              "prepare",
+              "decide",
+              "watchlist",
+              "profile"
+            ],
+            "description": "list: what he has found. scan: check the boards now. shortlist: the ones worth a slow read. analyse: read one against his resume. tailor: draft the packet. prepare: open and fill the form, stopping before submit. decide: mark interested or passed."
+          },
+          "id": {
+            "type": "string",
+            "description": "Which listing, for analyse, tailor, prepare and decide."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "new",
+              "interested",
+              "passed",
+              "applied"
+            ],
+            "description": "Filter for list."
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "interested",
+              "passed",
+              "applied",
+              "new"
+            ],
+            "description": "For decide."
+          },
+          "limit": {
+            "type": "number",
+            "description": "How many to return."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "jobs"
+  },
+  "permissions": {
+    "jobs": {
+      "list": "READ_STATE",
+      "scan": "MODIFY_STATE",
+      "shortlist": "READ_STATE",
+      "analyse": "READ_STATE",
+      "tailor": "MODIFY_STATE",
+      "prepare": "BROWSER_INTERACT",
+      "decide": "MODIFY_STATE",
+      "watchlist": "MODIFY_STATE",
+      "profile": "MODIFY_STATE"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "jobs"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

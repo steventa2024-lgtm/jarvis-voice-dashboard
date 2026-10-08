@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "translate",
+  "name": "Translate",
+  "version": "1.0.0",
+  "description": "Read something and translate it. screen captures what is on their display and reads it through the vision model; clipboard takes whatever they last copied. Use this the moment they ask you to translate something they are looking at, rather than asking them to type it out. Give BOTH the original and the translation - they are usually trying to learn, not only to understand.",
+  "tools": [
+    {
+      "name": "translate",
+      "description": "Read something and translate it. screen captures what is on their display and reads it through the vision model; clipboard takes whatever they last copied. Use this the moment they ask you to translate something they are looking at, rather than asking them to type it out. Give BOTH the original and the translation - they are usually trying to learn, not only to understand.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "screen",
+              "clipboard"
+            ],
+            "description": "Where the text is."
+          },
+          "to": {
+            "type": "string",
+            "description": "Target language. Defaults to English."
+          }
+        },
+        "required": [
+          "source"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "translate"
+  },
+  "permissions": {
+    "translate": {
+      "screen": "READ_SCREEN",
+      "clipboard": "READ_CLIPBOARD"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "vision",
+      "desktop"
+    ],
+    "mode": "any",
+    "client_requirements": []
+  }
+}

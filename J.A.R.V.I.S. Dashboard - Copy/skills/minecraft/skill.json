@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "id": "minecraft",
+  "name": "Minecraft",
+  "version": "1.0.0",
+  "description": "Build structures in his Minecraft world. \"Build me a mansion\", \"a modern house\", \"a treehouse\", \"a cave base\" - all this tool. It plans the structure and types /fill commands into the game chat, so a whole building goes up in seconds. It builds beside where he is standing, never around him. structure picks WHAT. Buildings: house, beach_house (stilts, glass to the view, a deck), theater (raked seats, stage, curtain). A treehouse or cave base is a house with that palette. Sport: football_stadium (gridiron, yard lines, end zones, goal posts), soccer_stadium (centre circle, penalty areas, goals), basketball_arena (indoor hall, wooden court, keys and hoops), baseball_stadium (dirt diamond, bases, mound), or plain stadium. racetrack is a banked oval with a pit lane and grandstand. Leisure: waterpark (terraced pools, tower, slides), amusement_park (ferris wheel, carousel, stalls). Retail: target_store, walmart, starbucks or a generic store - a big box with a glass front, branded parapet, pylon sign and a car park. These are the SILHOUETTE and the brand colours, not a licensed replica; say so if he expects an exact copy of a real shop. kind: small, medium, large, mansion. palette is the STYLE and carries the shape as well as the colours - stone, oak and quartz are traditional with pitched stepped roofs; modern is white concrete with a flat roof and curtain-wall glass; futuristic is grey and cyan with tinted glass; treehouse stands on a trunk with a ladder up; cave is cut into a hillside. floors 1 to 4. clear wipes the footprint of a build and lays grass back. It is RELATIVE like everything else, so he has to be standing where he stood when he built the thing he wants gone - tell him that rather than clearing blind. FROM A PHOTOGRAPH: if he attaches a picture of a build he wants something like, LOOK AT IT and pass what you can actually see in `overrides` - wall, trim, floor, roof_block and window as Minecraft block ids, roof as flat, pitched or stepped, glass as 0-100 for how much of the wall is window, and width and depth in blocks. Pick the nearest named palette as the base and let the overrides do the rest. Be honest about what that gets him: the same shape language, colours and proportions, NOT a copy. A hand-built showcase mansion with dormers, balustrades and gardens is not reproducible from /fill boxes, and promising ninety percent would be a lie. Say it will be in the spirit of the picture.CHANGING WHAT IS ALREADY THERE USES add, NEVER build. \"Add stairs\", \"give it a basement\", \"put a porch on it\", \"make me a garden\" - those are action add with a feature, which places only that feature and clears nothing. Calling build again does not extend a building: it lays a whole new one where he is standing now and its clearing pass eats the walls off the last one, which is what left him with doubled shells and empty stone platforms. It knows where he is. `where` asks the game directly with its own F3+C debug shortcut and gets back exact coordinates, facing and dimension - it does not read the screen or guess. A build records the coordinates it went up at, so \"add a porch\" afterwards is anchored to the BUILDING rather than to wherever he happens to be standing, and works from across the world. If a result says it was not anchored, say so rather than pretending it landed correctly. For \"build it here\" or \"put a pool behind the house\", call where first and say what you found - \"you are at -61, 81, 42 facing north\" - so he can tell you if you have the wrong spot before anything is placed. If build refuses with needs_confirm, do not retry with confirm to make the error go away. It means a building went up moments ago; either he wanted add, or he needs to walk well clear first. Ask him which. After a build the result carries five suggestions for what to add next. Read them out and ask which he wants. Never start building one unprompted.",
+  "tools": [
+    {
+      "name": "minecraft",
+      "description": "Build structures in his Minecraft world. \"Build me a mansion\", \"a modern house\", \"a treehouse\", \"a cave base\" - all this tool. It plans the structure and types /fill commands into the game chat, so a whole building goes up in seconds. It builds beside where he is standing, never around him. structure picks WHAT. Buildings: house, beach_house (stilts, glass to the view, a deck), theater (raked seats, stage, curtain). A treehouse or cave base is a house with that palette. Sport: football_stadium (gridiron, yard lines, end zones, goal posts), soccer_stadium (centre circle, penalty areas, goals), basketball_arena (indoor hall, wooden court, keys and hoops), baseball_stadium (dirt diamond, bases, mound), or plain stadium. racetrack is a banked oval with a pit lane and grandstand. Leisure: waterpark (terraced pools, tower, slides), amusement_park (ferris wheel, carousel, stalls). Retail: target_store, walmart, starbucks or a generic store - a big box with a glass front, branded parapet, pylon sign and a car park. These are the SILHOUETTE and the brand colours, not a licensed replica; say so if he expects an exact copy of a real shop. kind: small, medium, large, mansion. palette is the STYLE and carries the shape as well as the colours - stone, oak and quartz are traditional with pitched stepped roofs; modern is white concrete with a flat roof and curtain-wall glass; futuristic is grey and cyan with tinted glass; treehouse stands on a trunk with a ladder up; cave is cut into a hillside. floors 1 to 4. clear wipes the footprint of a build and lays grass back. It is RELATIVE like everything else, so he has to be standing where he stood when he built the thing he wants gone - tell him that rather than clearing blind. FROM A PHOTOGRAPH: if he attaches a picture of a build he wants something like, LOOK AT IT and pass what you can actually see in `overrides` - wall, trim, floor, roof_block and window as Minecraft block ids, roof as flat, pitched or stepped, glass as 0-100 for how much of the wall is window, and width and depth in blocks. Pick the nearest named palette as the base and let the overrides do the rest. Be honest about what that gets him: the same shape language, colours and proportions, NOT a copy. A hand-built showcase mansion with dormers, balustrades and gardens is not reproducible from /fill boxes, and promising ninety percent would be a lie. Say it will be in the spirit of the picture.CHANGING WHAT IS ALREADY THERE USES add, NEVER build. \"Add stairs\", \"give it a basement\", \"put a porch on it\", \"make me a garden\" - those are action add with a feature, which places only that feature and clears nothing. Calling build again does not extend a building: it lays a whole new one where he is standing now and its clearing pass eats the walls off the last one, which is what left him with doubled shells and empty stone platforms. It knows where he is. `where` asks the game directly with its own F3+C debug shortcut and gets back exact coordinates, facing and dimension - it does not read the screen or guess. A build records the coordinates it went up at, so \"add a porch\" afterwards is anchored to the BUILDING rather than to wherever he happens to be standing, and works from across the world. If a result says it was not anchored, say so rather than pretending it landed correctly. For \"build it here\" or \"put a pool behind the house\", call where first and say what you found - \"you are at -61, 81, 42 facing north\" - so he can tell you if you have the wrong spot before anything is placed. If build refuses with needs_confirm, do not retry with confirm to make the error go away. It means a building went up moments ago; either he wanted add, or he needs to walk well clear first. Ask him which. After a build the result carries five suggestions for what to add next. Read them out and ask which he wants. Never start building one unprompted.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "build",
+              "add",
+              "clear",
+              "where",
+              "plan",
+              "status"
+            ],
+            "description": "build: a NEW building. add: change the one already there. clear: wipe that footprint. where: read his exact coordinates and facing out of the game. plan: list the commands without sending. status: is the game reachable."
+          },
+          "feature": {
+            "type": "string",
+            "enum": [
+              "stairs",
+              "interior",
+              "basement",
+              "terrace",
+              "garden",
+              "porch"
+            ],
+            "description": "For add."
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Only for a deliberate SECOND building near a recent one."
+          },
+          "structure": {
+            "type": "string",
+            "enum": [
+              "house",
+              "beach_house",
+              "stadium",
+              "theater",
+              "waterpark",
+              "amusement_park",
+              "football_stadium",
+              "soccer_stadium",
+              "basketball_arena",
+              "baseball_stadium",
+              "racetrack",
+              "target_store",
+              "walmart",
+              "starbucks",
+              "store"
+            ],
+            "description": "What to build. house is the default and covers mansions, treehouses and cave bases through palette."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "small",
+              "medium",
+              "large",
+              "mansion"
+            ],
+            "description": "Size. Only meaningful for a house."
+          },
+          "palette": {
+            "type": "string",
+            "enum": [
+              "stone",
+              "oak",
+              "quartz",
+              "modern",
+              "futuristic",
+              "treehouse",
+              "cave"
+            ]
+          },
+          "floors": {
+            "type": "number",
+            "description": "1 to 4. Two by default."
+          },
+          "overrides": {
+            "type": "object",
+            "description": "What you saw in an attached photograph. All optional.",
+            "properties": {
+              "wall": {
+                "type": "string"
+              },
+              "trim": {
+                "type": "string"
+              },
+              "floor": {
+                "type": "string"
+              },
+              "roof_block": {
+                "type": "string"
+              },
+              "window": {
+                "type": "string"
+              },
+              "light": {
+                "type": "string"
+              },
+              "roof": {
+                "type": "string",
+                "enum": [
+                  "flat",
+                  "pitched",
+                  "stepped",
+                  "none"
+                ]
+              },
+              "glass": {
+                "type": "number",
+                "description": "0-100, how much of the wall is window."
+              },
+              "width": {
+                "type": "number"
+              },
+              "depth": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "minecraft"
+  },
+  "permissions": {
+    "minecraft": {
+      "build": "CONTROL_APP",
+      "add": "CONTROL_APP",
+      "clear": "CLEAR_DATA",
+      "where": "READ_STATE",
+      "plan": "READ_STATE",
+      "status": "READ_STATE"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "minecraft"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "desktop",
+  "name": "Desktop",
+  "version": "1.0.0",
+  "description": "See what the user is doing right now. clipboard returns whatever they last copied, active_window says which application is in front and what it is showing, and copy puts text on their clipboard. Check active_window when a request is ambiguous — the same question means something different in a code editor than in a music player. Use clipboard rather than asking them to paste something again.",
+  "tools": [
+    {
+      "name": "desktop",
+      "description": "See what the user is doing right now. clipboard returns whatever they last copied, active_window says which application is in front and what it is showing, and copy puts text on their clipboard. Check active_window when a request is ambiguous — the same question means something different in a code editor than in a music player. Use clipboard rather than asking them to paste something again.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "clipboard",
+              "active_window",
+              "copy"
+            ],
+            "description": "clipboard: read it. active_window: what is in front. copy: write to it."
+          },
+          "text": {
+            "type": "string",
+            "description": "For copy only: what to put on the clipboard."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "kind": "client_adapter",
+    "adapter": "desktop"
+  },
+  "permissions": {
+    "desktop": {
+      "clipboard": "READ_CLIPBOARD",
+      "active_window": "READ_STATE",
+      "copy": "WRITE_CLIPBOARD"
+    }
+  },
+  "availability": {
+    "capabilities": [
+      "desktop"
+    ],
+    "mode": "all",
+    "client_requirements": []
+  }
+}

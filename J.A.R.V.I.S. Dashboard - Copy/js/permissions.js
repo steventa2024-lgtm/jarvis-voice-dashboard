@@ -1,7 +1,7 @@
 /* Mk VIII permission transport and UI. All classification/policy lives on the server. */
 (function (J) {
   'use strict';
-  const nativeFetch = window.fetch.bind(window), waiting = new Map();
+  const nativeFetch = window.fetch.bind(window), waiting = new Map(), connectionStatus = new Map();
   let session = null, routes = {}, init = null, signal = null, userText = '', background = false, turnReady = Promise.resolve(), turnId = null;
   const clone = value => JSON.parse(JSON.stringify(value));
   async function api(action, data) {
@@ -101,7 +101,14 @@
         const description = await api('route_action', {path,query:Object.fromEntries(parsed.searchParams)});
         const receipt = await authorize(description.proposed), headers = new Headers(options && options.headers || {});
         headers.set('X-Jarvis-UI', session); headers.set('X-Jarvis-Authorization', receipt);
-        return nativeFetch(url, Object.assign({}, options || {}, {headers}));
+        const response = await nativeFetch(url, Object.assign({}, options || {}, {headers}));
+        if (response.ok && ['/api/spotify/status','/api/google/status'].includes(path)) {
+          response.clone().json().then(data => {
+            const connected = !!data.connected, prior = connectionStatus.get(path); connectionStatus.set(path, connected);
+            if (prior !== undefined && prior !== connected) J.emit('skills:refresh');
+          }).catch(() => {});
+        }
+        return response;
       } catch (error) { return new Response(JSON.stringify({ok:false,error:error.message}),{status:403,headers:{'content-type':'application/json'}}); }
     }
     if (!options || String(options.method || 'GET').toUpperCase() !== 'POST' || !/^\/api\/(?:files|desktop|google|spotify|recall|video|jobs|minecraft|lessons|tasks|memory|apply|hunt)\/command$|^\/api\/open$/.test(path)) return nativeFetch(url, options);
@@ -114,7 +121,9 @@
       if (tool === 'tasks' && new Headers(options.headers || {}).get('X-Jarvis-Interactive') === '1') return await managementFetch(url, options, proposed);
       const receipt = await authorize(proposed);
       const headers = new Headers(options.headers || {}); headers.set('X-Jarvis-UI', session); headers.set('X-Jarvis-Authorization', receipt);
-      return nativeFetch(url, Object.assign({}, options, { headers }));
+      const response = await nativeFetch(url, Object.assign({}, options, { headers }));
+      if (response.ok && ['spotify','google'].includes(tool) && ['client_id','client_secret','disconnect'].some(key => Object.hasOwn(body,key))) J.emit('skills:refresh');
+      return response;
     } catch (error) {
       return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 403, headers: { 'content-type': 'application/json' } });
     }
@@ -220,7 +229,11 @@
     convo.appendChild(surface); surface.hidden = false;
     refresh().then(() => { convo.scrollTop = convo.scrollHeight; surface.scrollIntoView({block:'nearest'}); }).catch(e => { body.textContent = e.message; });
   }
-  J.permissions = { beginTurn, endTurn, dispatch, resolve, resumeRun, api, show, refresh,
+  J.permissions = { skillsCommand: async data => {
+      await initialize();
+      const response = await nativeFetch('api/skills/command', {method:'POST',headers:{'content-type':'application/json','X-Jarvis-UI':session},body:JSON.stringify(data)});
+      const result = await response.json(); if (!response.ok || !result.ok) throw new Error(result.error || 'Skill management unavailable.'); return result;
+    }, beginTurn, endTurn, dispatch, resolve, resumeRun, api, show, refresh,
     cancel: () => Array.from(waiting.values()).forEach(settle=>settle({decision:'DENY',reason:'cancelled'})),
     diagnostics: () => ({ waiting: waiting.size }) };
   const opener = document.getElementById('permissionsOpen'); if (opener) opener.addEventListener('click', show);
