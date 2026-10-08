@@ -293,7 +293,7 @@
     else if (executing()) { const s = currentStep(); if (s && s.status === 'verifying') s.status = 'running'; status('executing'); }
   }
   function finish() {
-    if (executing()) status('waiting', 'Turn ended with unverified steps. Say “continue mission” to proceed.');
+    if (executing() && !approvals.size) status('waiting', 'Turn ended with unverified steps. Say “continue mission” to proceed.');
     return receipt();
   }
   function receipt() {
@@ -310,13 +310,41 @@
     try {
       if (saved.steps.some(s => !STEP_STATUSES.includes(s.status) || !Array.isArray(s.evidence))) return;
       mission = saved; approvals.clear(); calls.clear();
+      (mission.pendingPermissions || []).forEach(id => approvals.add('permission:' + id));
       if (!TERMINAL.has(mission.status)) {
-        mission.status = 'waiting'; mission.outcome = 'Interrupted by reload. Explicit continuation is required; no work resumes automatically.';
+        mission.status = saved.pendingPermissions && saved.pendingPermissions.length ? 'waiting_approval' : 'waiting'; mission.outcome = 'Interrupted by reload. Explicit continuation is required; no work resumes automatically.';
         mission.steps.forEach(s => { if (['running', 'verifying', 'failed'].includes(s.status)) s.status = 'pending'; });
         publish('waiting');
       }
     } catch (e) { mission = null; }
   }
+  J.on('permission:waiting', p => {
+    if (!isActive()) return;
+    approvals.add('permission:' + p.id);
+    mission.pendingPermissions = Array.from(new Set((mission.pendingPermissions || []).concat(p.id)));
+    status('waiting_approval', 'Waiting for permission: ' + p.capability); publish('waiting');
+  });
+  J.on('permission:resolved', p => {
+    approvals.delete('permission:' + p.id);
+    if (!isActive()) return;
+    mission.pendingPermissions = (mission.pendingPermissions || []).filter(id => id !== p.id);
+    if (!p.ok) {
+      addEvidence({tool: 'permission', kind: 'approval', success: false, reference: p.id, summary: 'PERMISSION_DENIED: ' + p.reason});
+      block('Permission denied, cancelled, or expired. No protected action executed.');
+    } else if (!approvals.size) status('executing');
+  });
+  J.on('permission:recovered', p => {
+    if (!isActive()) return;
+    const input = p.action.input || {};
+    const success = !/^FAILED/.test(p.output);
+    addEvidence({ tool: p.action.tool + ':' + (input.action || ''), kind: ['write','apply','scaffold','revert'].includes(input.action) ? 'change' : 'observation',
+      project: clean(input.project || (p.classification || {}).project_name, 120), path: clean(input.path || (p.classification || {}).target, 180), success, summary: p.output });
+    mission.pendingPermissions = (mission.pendingPermissions || []).filter(id => id !== p.id);
+    approvals.delete('permission:' + p.id);
+    if (!success) block('Approved action could not safely resume.');
+    else if (!approvals.size) status('executing');
+    else status('waiting_approval');
+  });
   J.on('diff-review', p => { if (executing()) { approvals.add(p.id); status('waiting_approval'); publish('waiting'); } });
   J.on('review-result', p => {
     if (!approvals.delete(p.id) || !isActive()) return;
@@ -352,7 +380,7 @@
   function importSnapshot(saved) {
     if (!durableRun || !saved || saved.version !== 1 || !Array.isArray(saved.steps) || !saved.steps.length || !saved.durable || saved.durable.runId !== durableRun.runId) return false;
     const candidate = copy(saved);
-    candidate.status = candidate.currentStep === candidate.steps.length && candidate.steps.every(step => step.status === 'completed' && step.resultSummary && step.evidence.length) ? 'completed' : 'waiting';
+    candidate.status = candidate.currentStep === candidate.steps.length && candidate.steps.every(step => step.status === 'completed' && step.resultSummary && step.evidence.length) ? 'completed' : (candidate.pendingPermissions && candidate.pendingPermissions.length ? 'waiting_approval' : 'waiting');
     J.save('mission', candidate); mission = null; restore();
     if (mission && mission.status === 'completed') publish('complete');
     return !!mission && mission.id === candidate.id;

@@ -1,0 +1,6 @@
+/* Permission controls remain inside the existing transcript flow. */
+.permission-surface { width: 100%; min-width: 0; max-height: 230px; overflow-y: auto; box-sizing: border-box; padding: 12px; border: 1px solid var(--line, rgba(53,214,255,.18)); }
+.permission-surface p { margin: 6px 0; font-size: 12px; overflow-wrap: anywhere; }
+.permission-card { padding: 10px 0; border-top: 1px solid var(--line, rgba(53,214,255,.18)); }
+#permissionsSurface { flex: 0 0 auto; min-width: 0; max-width: 82ch; }
+#permissionsSurface[hidden] { display: none; }

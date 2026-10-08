@@ -1848,6 +1848,11 @@
   }
 
   async function execClientTool(name, input) {
+    if (!J.permissions) return 'FAILED - Permission broker is unavailable.';
+    return J.permissions.dispatch(name, input, () => executeAuthorizedTool(name, input));
+  }
+
+  async function executeAuthorizedTool(name, input) {
     try {
       if (name === 'tasks' && J.tasks) return await J.tasks.modelCommand(input, lastUserText);
       if (name === 'spotify') return await spotify(input.action, input.query, input.value);
@@ -3262,7 +3267,7 @@
 
   async function send(text, options) {
     options = options || {};
-    if (!options.background && J.tasks && J.tasks.background() && !busy) {
+    if (!options.background && J.tasks && J.tasks.background() && !busy && (!J.agent || J.agent.intent(text) !== 'cancel')) {
       J.tasks.deferForeground(() => send(text));
       return;
     }
@@ -3298,6 +3303,7 @@
 
     if (!options.background && J.tasks) J.tasks.beginUserTurn();
     lastUserText = text;
+    if (J.permissions) J.permissions.beginTurn(text, options, controller.signal);
     lastReplyText = '';
     /* Anything attached is resolved to text before the turn starts. Images go
        through the vision model, because the model holding the conversation
@@ -3447,7 +3453,7 @@
                 results[calls.indexOf(call)] = { type: 'tool_result', tool_use_id: call.id, content: 'FAILED - mission dispatch stopped; no action attempted.' };
                 return;
               }
-              J.log('Tool: ' + call.name + ' ' + JSON.stringify(call.input).slice(0, 90), 'acc', 'sys');
+              J.log('Tool: ' + call.name + ':' + String((call.input || {}).action || ''), 'acc', 'sys');
               J.emit('tool-start', { name: call.name, input: call.input || {} });
               const out = missionTurn && (controller.signal.aborted || !J.agent.executing())
                 ? 'FAILED - mission stopped before dispatch; no action attempted.'
@@ -3562,6 +3568,7 @@
           history.push({ role: 'assistant', content: [{ type: 'text', text }] });
         }
       }
+      if (J.permissions) J.permissions.endTurn();
       const stillAbortable = controller;
       busy = false;
       controller = null;
@@ -3846,6 +3853,7 @@
   /* ============================================================ controls */
 
   function abort() {
+    if (J.permissions) J.permissions.cancel();
     if (J.agent && J.agent.isActive()) { J.agent.cancel(); queued = null; }
     if (controller) { controller.abort(); J.toast('Stopped.', 'warn', 2000); }
     /* An unanswered diff would otherwise hold the tool loop open for three
@@ -3883,7 +3891,7 @@
   }
 
   J.brain = {
-    send, abort, ready, verify, listModels, isBusy: () => busy,
+    send, abort, ready, verify, listModels, resumePermissionTool: executeAuthorizedTool, isBusy: () => busy,
     resolveTransport, getTransport: () => transport,
     clearConversation, exportTranscript,
     getHistory: () => history,

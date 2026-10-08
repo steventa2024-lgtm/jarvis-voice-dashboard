@@ -22,6 +22,7 @@ import socketserver
 import sys
 import webbrowser
 import threading
+import io
 
 # ===========================================================================
 #  Search and fetch, proxied through this server.
@@ -709,8 +710,70 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _permission_gate(self, route):
+        """Single server boundary, before any protected handler executes."""
+        import jarvis_permissions as permissions
+        if route not in permissions.ROUTES and route != '/api/permissions/command':
+            return False
+        host = urllib.parse.urlparse('http://' + self.headers.get('Host', '')).hostname
+        origin = self.headers.get('Origin')
+        if not _is_loopback(self.client_address[0]) or host not in ('localhost', '127.0.0.1', '::1') or (origin and urllib.parse.urlparse(origin).netloc != self.headers.get('Host')):
+            self._json_out({'ok': False, 'error': 'Permission requests require the local origin.'}, 403)
+            return True
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+            if not 0 < length <= 1048576 or self.headers.get('Content-Type', '').split(';')[0].strip() != 'application/json':
+                raise ValueError('Bounded application/json required.')
+            raw = self.rfile.read(length)
+            data = _json.loads(raw)
+            if not isinstance(data, dict):
+                raise ValueError('Object required.')
+            self.rfile = io.BytesIO(raw)  # Original handlers consume the exact same bytes.
+            store = permission_store()
+            session = self.headers.get('X-Jarvis-UI')
+            if route == '/api/permissions/command':
+                if data.get('action') == 'context' and data.get('context', {}).get('background'):
+                    run = task_store().command({'action': 'get_run', 'run_id': data['context'].get('task_run_id')})
+                    if not run.get('ok'):
+                        raise ValueError('Unknown durable run.')
+                    task = task_store().command({'action': 'get', 'task': run['run']['task_id']})
+                    data['context']['run_policy'] = task['task']['run_policy']
+                if data.get('action') == 'create_policy' and data.get('capability') in ('READ_FILE','READ_PROJECT','WRITE_FILE','CREATE_FILE','MODIFY_PROJECT','EXECUTE_CODE','RUN_TESTS') and data.get('scope_type', 'target') != 'global':
+                    value = data.get('scope_value', '')
+                    if isinstance(value, str) and value and not os.path.isabs(value):
+                        data['scope_value'] = os.path.realpath(os.path.join(files._config['projects'], value))
+                result = store.command(data, session)
+                self._json_out(result, 200 if result.get('ok') else 403)
+                return True
+            tool = permissions.ROUTES[route]
+            if tool == 'tasks' and data.get('action') in ('due','claim','check_claim','heartbeat','complete','fail','interrupt','get_run'):
+                return False  # Fenced Phase 2 runtime mechanics; never model tools.
+            proposed = {'kind': 'route', 'tool': tool, 'input': data}
+            receipt = self.headers.get('X-Jarvis-Authorization')
+            if receipt:
+                allowed = store.consume(proposed, receipt, session)
+                result = {'decision': 'ALLOW' if allowed else 'DENY', 'reason': 'invalid_authorization_receipt'}
+            else:
+                result = store.check(proposed, session)
+                # Harmless legacy reads remain functional; protected actions never execute without a receipt.
+                allowed = result['decision'] == 'ALLOW' and store.consume(proposed, result.get('receipt'), session)
+            if not allowed:
+                self._json_out({'ok': False, 'error': 'PERMISSION_' + result['decision'] + ': ' + result.get('reason', 'protected action'), 'permission': {k: v for k, v in result.items() if k != 'receipt'}}, 403)
+                return True
+            return False
+        except (ValueError, TypeError, KeyError):
+            self._json_out({'ok': False, 'error': 'Invalid or stale permission request.'}, 400)
+            return True
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            return True
+        except Exception:
+            self._json_out({'ok': False, 'error': 'Permission broker unavailable; action stopped.'}, 503)
+            return True
+
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
+        if self._permission_gate(parsed.path):
+            return
 
         if parsed.path == '/api/tasks/command':
             if not _is_loopback(self.client_address[0]):
@@ -1085,6 +1148,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         route = parsed.path
         args = urllib.parse.parse_qs(parsed.query)
+        import jarvis_permissions
+        proposed = jarvis_permissions.read_action(route, args)
+        if proposed:
+            try:
+                store = permission_store()
+                session = self.headers.get('X-Jarvis-UI')
+                receipt = self.headers.get('X-Jarvis-Authorization')
+                if receipt:
+                    allowed = store.consume(proposed, receipt, session)
+                else:
+                    decision = store.check(proposed, session)
+                    allowed = decision['decision'] == 'ALLOW' and store.consume(proposed, decision.get('receipt'), session)
+                if not allowed:
+                    return self._json_out({'ok': False, 'error': 'PERMISSION_DENIED: protected read.'}, 403)
+            except Exception:
+                return self._json_out({'ok': False, 'error': 'Permission broker unavailable; read stopped.'}, 503)
 
         if route == '/api/health':
             # Deliberately does NOT advertise `jarvis`. That flag means "this
@@ -1321,6 +1400,48 @@ class Server(socketserver.ThreadingTCPServer):
     # page hangs half-loaded.
     allow_reuse_address = True          # survives a quick restart
     daemon_threads = True               # Ctrl+C does not wait on open sockets
+
+
+def describe_permission(action):
+    """Resolve held proposals from server state, never caller-provided scope."""
+    import jarvis_permissions
+    args = action.get('input', {}) if isinstance(action, dict) else {}
+    if isinstance(action, dict) and action.get('tool') == 'files' and args.get('action') == 'apply':
+        pending = files._PENDING.get(str(args.get('id', '')))
+        if not pending:
+            return dict(jarvis_permissions.classify(action), capability='UNKNOWN')
+        resolved = dict(action, input=dict(args, project=pending['project'], path=pending['path']))
+    else:
+        resolved = action
+    result = jarvis_permissions.classify(resolved)
+    project = resolved.get('input', {}).get('project') if isinstance(resolved, dict) else None
+    if result['tool'] == 'files':
+        project = project or resolved.get('input', {}).get('name')
+        if project:
+            scope = os.path.realpath(os.path.join(files._config['projects'], str(project)))
+            path = resolved.get('input', {}).get('path', '')
+            result['target'] = jarvis_permissions.target(os.path.realpath(os.path.join(scope, str(path))))
+            result['project_scope'] = jarvis_permissions.target(scope)
+            result['project_name'] = project
+        elif resolved.get('input', {}).get('path'):
+            result['target'] = jarvis_permissions.target(os.path.realpath(str(resolved['input']['path'])))
+        if args.get('action') == 'apply':
+            import hashlib
+            result['content_hash'] = hashlib.sha256(pending['content'].encode('utf-8')).hexdigest()
+    return result
+
+
+_permission_store = None
+_permission_init_lock = threading.Lock()
+
+
+def permission_store():
+    global _permission_store
+    with _permission_init_lock:
+        if _permission_store is None:
+            import jarvis_permissions
+            _permission_store = jarvis_permissions.PermissionStore(os.path.join(os.path.dirname(__file__), 'jarvis_permissions.db'), describe=describe_permission)
+        return _permission_store
 
 
 # A fixed private runtime path; clients never select a database.

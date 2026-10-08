@@ -22,10 +22,10 @@
     return /\b(?:check|inspect|run|review|research|prepare|summarize|test|validate|build|fix)\b/i.test(value)
       && /\b(?:every (?:\d+ (?:minutes?|hours?)|day|morning|weekday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|tonight|tomorrow|in \d+ (?:minutes?|hours?|days?))\b/i.test(value);
   }
-  async function api(action, data) {
+  async function api(action, data, interactive) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch('api/tasks/command', { method: 'POST', headers: { 'content-type': 'application/json' },
+      const response = await fetch('api/tasks/command', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json' }, interactive ? {'X-Jarvis-Interactive':'1'} : {}),
         body: JSON.stringify(Object.assign({ action }, data || {})), signal: controller.signal });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Task server unavailable.');
@@ -73,6 +73,7 @@
   }
   function allowTool(call) {
     if (!active) return true;
+    if (J.permissions) return true; // Server broker owns policy; legacy fallback remains for offline Agent tests.
     const input = call.input || {}, name = call.name;
     if (name === 'files') return ['read', 'list', 'list_project', 'diff', 'history', 'status', 'run', 'check'].includes(input.action)
       || (active.task.run_policy === 'reviewed_writes' && input.action === 'write');
@@ -97,6 +98,7 @@
       await saveCheckpoint();
       if ((!latest || latest.status !== 'completed') && !J.brain.ready()) throw new Error('Configured model/provider is unavailable.');
       if (active.lost) throw new Error('Worker lost its claim before execution.');
+      if (active.run.resume_requested && J.permissions) await J.permissions.resumeRun(active.run.id);
       const message = correction && correction.runId === active.run.id ? correction.text : active.run.resume_requested ? 'Resume the mission' : active.task.objective;
       correction = null;
       // Explicitly resumed, fully verified work needs receipt delivery only.
@@ -110,12 +112,12 @@
       const summary = receipt ? receipt.completed + '/' + receipt.total + ' verified. ' + (receipt.outcome || '')
         + ' ' + receipt.verified.map(s => s.summary).join('; ') : 'Planner produced no verified outcome.';
       if (active.lost) return; // The server fences stale workers and records interruption.
-      if (state === 'cancelled') await api('cancel_run', { run_id: active.run.id });
+      if (state === 'cancelled') await api('cancel_run', { run_id: active.run.id }, true);
       else await api(state === 'completed' ? 'complete' : state === 'waiting' ? 'interrupt' : 'fail', owned({ mission: latest, summary }));
       acknowledged = true;
     } catch (e) {
       finalizing = true;
-      try { if (!active.lost) { await api('fail', owned({ mission: latest, summary: e.message })); acknowledged = true; } } catch (ignored) { /* Lease expiry records interruption. */ }
+      try { if (!active.lost) { if (J.agent.current() && J.agent.current().status === 'cancelled') await api('cancel_run', {run_id:active.run.id}, true); else await api('fail', owned({ mission: latest, summary: e.message })); acknowledged = true; } } catch (ignored) { /* Lease expiry records interruption. */ }
     } finally {
       clearInterval(heartbeat); clearTimeout(checkpointTimer);
       J.agent.detachRun(); active = null; latest = null; finalizing = false; if (acknowledged) savePointer();
@@ -169,7 +171,7 @@
     } catch (e) { return 'FAILED - ' + e.message; }
   }
   async function manage(action, data) {
-    const result = await api(action, data);
+    const result = await api(action, data, true);
     if (action === 'cancel_run' && active && data.run_id === active.run.id) J.brain.abort();
     if (action === 'restart_run') {
       const current = J.agent.current();
@@ -268,8 +270,9 @@
     await recoverPage(); poll(); setInterval(poll, 15000);
   }
   J.on('tasks:available', enable);
-  J.on('conversation-cleared', () => { if (active) { latest = latest || J.agent.current(); J.brain.abort(); api('cancel_run', { run_id: active.run.id }).catch(() => {}); } });
+  J.on('conversation-cleared', () => { if (active) { latest = latest || J.agent.current(); J.brain.abort(); api('cancel_run', { run_id: active.run.id }, true).catch(() => {}); } });
   J.tasks = { beginUserTurn: () => { turnKey = uuid(); }, deferForeground: callback => foreground.push(callback), api, manage, poll, background, allowTool, ensureClaim, schedulingIntent, modelCommand, resumeLinked, tool, show,
+    permissionContext: () => active ? { task_run_id: active.run.id, run_policy: active.task.run_policy } : {},
     diagnostics: () => ({ worker, available, runId: active && active.run.id }) };
   if (J.taskServiceAvailable) enable();
 })(window.J);

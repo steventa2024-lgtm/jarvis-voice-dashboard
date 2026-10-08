@@ -13,6 +13,10 @@ jarvis_minecraft.json
 jarvis_state.json
 jarvis_video.json
 *.db
+# Mk VIII Permission Broker runtime (also covered by the generic patterns)
+jarvis_permissions.db
+jarvis_permissions.db-wal
+jarvis_permissions.db-shm
 *.db-wal
 *.db-shm
 *.sqlite

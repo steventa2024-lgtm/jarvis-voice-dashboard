@@ -144,9 +144,12 @@ def checkpoint(value):
         return None
     if not isinstance(value, dict) or value.get('version') != 1 or not isinstance(value.get('id'), str):
         raise ValueError('Invalid Phase 1 mission checkpoint.')
-    allowed = {'version', 'id', 'title', 'objective', 'createdAt', 'updatedAt', 'status', 'currentStep', 'steps', 'evidenceSequence', 'evidence', 'failures', 'revisions', 'corrections', 'outcome', 'durable'}
+    allowed = {'version', 'id', 'title', 'objective', 'createdAt', 'updatedAt', 'status', 'currentStep', 'steps', 'evidenceSequence', 'evidence', 'failures', 'revisions', 'corrections', 'outcome', 'durable', 'pendingPermissions'}
     if set(value) - allowed or value.get('status') not in ('planning', 'ready', 'executing', 'verifying', 'waiting', 'waiting_approval', 'blocked', 'completed', 'failed', 'cancelled'):
         raise ValueError('Invalid mission fields or state.')
+    pending_permissions = value.get('pendingPermissions', [])
+    if not isinstance(pending_permissions, list) or len(pending_permissions) > 10 or any(not isinstance(p, str) or len(p) > 80 for p in pending_permissions):
+        raise ValueError('Invalid bounded permission references.')
     steps, evidence = value.get('steps'), value.get('evidence')
     if not isinstance(steps, list) or len(steps) > 10 or not isinstance(evidence, list) or len(evidence) > 60:
         raise ValueError('Checkpoint exceeds bounded Phase 1 state.')
